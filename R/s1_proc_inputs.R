@@ -82,7 +82,8 @@ zone_from_ll <- function(lon, lat){
 #' receiver. The function subsequently removes any locations
 #' with \code{NA} in the x- or y-coordinate with a warning.
 #'
-#' @return Returns a \code{data.frame} of georeferenced detections.
+#' @return Returns a \code{data.frame} of class \code{dets} of
+#' georeferenced detections.
 #'
 #' @seealso \link{acoustic} for details on the formatting of the
 #' \code{data.frame}s \code{det} and \code{sta}
@@ -121,7 +122,19 @@ proc_dets <- function(det, sta){
     res <- res[-rem,]
   }
 
+  #Set the S3 class
+  class(res) <- c("dets", "data.frame")
+
+  #Return
   return(res)
+}
+
+#' Check if object is of class \code{dets}.
+#'
+#' Convenience function that checks is object is of class \code{dets}.
+#' @export
+is.dets <- function(x) {
+  inherits(x, "dets")
 }
 
 #' Plots processed station history
@@ -131,7 +144,7 @@ proc_dets <- function(det, sta){
 #'
 #' @usage plot_sta_history(proc_det, set.par = TRUE, ...)
 #'
-#' @param proc_det A \code{data.frame} of georeferenced detections as returned
+#' @param proc_det A \code{data.frame} of class \code{dets} as returned
 #' by the function \code{\link{proc_dets}()}.
 #' @param set.par \code{TRUE} or \code{FALSE}. Should the function change
 #' the graphical parameters or not? (This should be \code{FALSE} only if the
@@ -157,6 +170,11 @@ proc_dets <- function(det, sta){
 #'
 #' @export
 plot_sta_history <- function(proc_det, set.par=TRUE, ...) {
+  #Check class
+  if(!is.dets(proc_det)){
+    stop("\n  Object proc_det must be of class 'dets'.
+         See ?proc_dets for conversion.")
+  }
   #Store original parameters
   orig.par <- par(no.readonly = TRUE)
   #Change parameters
@@ -190,7 +208,7 @@ plot_sta_history <- function(proc_det, set.par=TRUE, ...) {
 #'              sta.col = "black", sta.bg = "red",
 #'              leg.pos = "bottomleft", set.par = TRUE, ...)
 #'
-#' @param proc_det A \code{data.frame} of georeferenced detections as returned
+#' @param proc_det A \code{data.frame} of class \code{dets} as returned
 #' by the function \code{\link{proc_dets}()}.
 #' @param sta.crs A coordinate reference system to use for the station
 #' locations. Used by \code{\link[sf]{st_sf}} as the \code{crs} argument.
@@ -211,6 +229,8 @@ plot_sta_history <- function(proc_det, set.par=TRUE, ...) {
 #' the graphical parameters or not? This should be \code{FALSE} if the
 #' user wishes to manually set the graphical parameters, \emph{e.g.}, so
 #' that they can still add to the plot manually after it is generated.
+#' @param return_df \code{TRUE} or \code{FALSE}. Should the function also
+#' return a \code{data.frame} of aggregated station detections?
 #' @param ... Additional arguments (not currently implemented)
 #'
 #' @details Details here
@@ -243,7 +263,13 @@ map_dets <- function(proc_det, sta.crs = 4326, base.layers = NULL,
                      base.borders = NULL, base.cols = NULL,
                      sta.col = "black", sta.bg = "red",
                      leg.pos = "bottomleft",
-                     xlim = NULL, ylim = NULL, set.par = TRUE, ...) {
+                     xlim = NULL, ylim = NULL, set.par = TRUE,
+                     return_df = TRUE, ...) {
+  #Check class
+  if(!is.dets(proc_det)){
+    stop("\n  Object proc_det must be of class 'dets'.
+  See ?proc_dets for conversion.")
+  }
   #Store original parameters
   orig.par <- par(no.readonly = TRUE)
   #Change parameters
@@ -367,4 +393,45 @@ map_dets <- function(proc_det, sta.crs = 4326, base.layers = NULL,
   }
   #Return the aggregated data
   return(stas)
+}
+
+#' Plot a \code{dets} object
+#'
+#' S3 method for plotting a \code{dets} object.
+#'
+#' @param proc_det A \code{data.frame} of class \code{dets} as returned
+#' by the function \code{\link{proc_dets}()}.
+#' @param which A character string for which plot to create. Defaults
+#' to \code{map}. See details below.
+#' @param ... Additional parameters to pass to the specific plotting function.
+#'
+#' @details
+#' Wrapper that calls one of the plotting functions, depending on the value
+#' of parameter \code{which}. If \code{which == "history"} then the function
+#' \code{\link{plot_sta_history}()} is called (the default), but if
+#' \code{which == "map"} then the function \code{\link{map_dets}()} is called.
+#'
+#' @examples
+#' #Load the example data set
+#' data(acoustic)
+#'
+#' #Process detections
+#' proc.det <- proc_dets(det = acoustic$detections, sta = acoustic$stations)
+#'
+#' #Plot station history
+#' plot(proc.det)
+#'
+#' #Map detections
+#' plot(proc.det, which = "map")
+#' @export
+plot.dets <- function(proc_det, which = "history", ...){
+  if(!(which %in% c("map", "history"))){
+    stop("\n  which must be one of 'map' (default) or 'history'")
+  }
+  if(which == "history"){
+    plot_sta_history(proc_det, ...)
+  }
+  if(which == "map"){
+    map_dets(proc_det, ...)
+  }
 }

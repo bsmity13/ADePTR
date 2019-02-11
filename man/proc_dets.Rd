@@ -17,7 +17,8 @@ located for a period of time. Format should match the object
 \item{...}{Additional arguments (not currently implemented)}
 }
 \value{
-Returns a \code{data.frame} of georeferenced detections.
+Returns a \code{data.frame} of class \code{dets} of
+georeferenced detections.
 }
 \description{
 This function combines detections with stations to place detections

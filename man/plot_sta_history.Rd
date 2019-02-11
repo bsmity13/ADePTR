@@ -7,7 +7,7 @@
 plot_sta_history(proc_det, set.par = TRUE, ...)
 }
 \arguments{
-\item{proc_det}{A \code{data.frame} of georeferenced detections as returned
+\item{proc_det}{A \code{data.frame} of class \code{dets} as returned
 by the function \code{\link{proc_dets}()}.}
 
 \item{set.par}{\code{TRUE} or \code{FALSE}. Should the function change

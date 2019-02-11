@@ -10,7 +10,7 @@ map_dets(proc_det, sta.crs = 4326, base.layers = NULL,
              leg.pos = "bottomleft", set.par = TRUE, ...)
 }
 \arguments{
-\item{proc_det}{A \code{data.frame} of georeferenced detections as returned
+\item{proc_det}{A \code{data.frame} of class \code{dets} as returned
 by the function \code{\link{proc_dets}()}.}
 
 \item{sta.crs}{A coordinate reference system to use for the station
@@ -37,6 +37,9 @@ will accept. Defaults to the text string \code{"bottomleft"}.}
 the graphical parameters or not? This should be \code{FALSE} if the
 user wishes to manually set the graphical parameters, \emph{e.g.}, so
 that they can still add to the plot manually after it is generated.}
+
+\item{return_df}{\code{TRUE} or \code{FALSE}. Should the function also
+return a \code{data.frame} of aggregated station detections?}
 
 \item{...}{Additional arguments (not currently implemented)}
 }
