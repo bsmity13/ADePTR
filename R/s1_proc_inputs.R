@@ -96,7 +96,7 @@ zone_from_ll <- function(lon, lat){
 #' proc.det <- proc_dets(det = acoustic$detections, sta = acoustic$stations)
 #'
 #' @export
-proc_dets <- function(det, sta){
+procs_dets <- function(det, sta){
   #Check that the dt_* columns are formatted
   if((!lubridate::is.POSIXct(sta$dt_dep) | !lubridate::is.POSIXct(sta$dt_ret))){
     stop("The dt columns of 'sta' should be formatted as POSIXct.")
