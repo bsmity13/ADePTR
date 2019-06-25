@@ -58,10 +58,11 @@ zone_from_ll <- function(lon, lat){
 #' @usage proc_dets(det, sta, ...)
 #'
 #' @param det A \code{data.frame} of detections. Format should match the
-#' object \strong{detections} from \link{acoustic}.
+#' object \strong{detections} from \link{acoustic} (`id`, `dt`, `rec_id`).
 #' @param sta A \code{data.frame} of the stations where receivers were
 #' located for a period of time. Format should match the object
-#' \strong{stations} from \link{acoustic}.
+#' \strong{stations} from \link{acoustic} (`sta_id`, `rec_id`, `dt_dep`,
+#' `dt_ret`, `x`, `y`).
 #' @param ... Additional arguments (not currently implemented)
 #'
 #' @details Uses \code{\link[sqldf]{sqldf}} to combine \code{det} with
@@ -110,7 +111,8 @@ proc_dets <- function(det, sta){
                       FROM det LEFT JOIN sta
                         ON det.rec_id = sta.rec_id
                           AND det.dt > sta.dt_dep
-                          AND det.dt < sta.dt_ret")
+                          AND det.dt < sta.dt_ret",
+                      drv = "SQLite")
   #Remove any detections that were not assigned to a location
   rem <- which(is.na(res$x) | is.na(res$y))
   if (length(rem) > 0) {
@@ -434,4 +436,9 @@ plot.dets <- function(proc_det, which = "history", ...){
   if(which == "map"){
     map_dets(proc_det, ...)
   }
+}
+
+#My new function
+my.new.function <- function(x){
+  print(x)
 }
