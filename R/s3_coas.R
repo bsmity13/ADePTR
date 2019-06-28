@@ -228,6 +228,7 @@ map_coas <- function(proc_det, coas, coa.crs = 4326, coa.palette = viridis::viri
 #'
 #' S3 method for plotting a \code{coa} object.
 #'
+<<<<<<< HEAD
 #' @param coas An object of class \code{coa} to plot. Function
 #' \code{\link{coa_locs}()} creates this object.
 #' @param proc_det The \code{data.frame} of processed detections used by
@@ -237,10 +238,17 @@ map_coas <- function(proc_det, coas, coa.crs = 4326, coa.palette = viridis::viri
 #' @export
 plot.coa <- function(coas, proc_det, ...){
 
+=======
+#' @param coas An object of class \code{coa} to plot.
+#'
+#' @export
+plot.coa <- function(coas, ...){
+>>>>>>> 42e5c4f8cc6d88e986fc4a19a967334acd811b56
   #Check class before proceeding
   if(!("coa" %in% class(coas))){
     stop("Object must be of class 'coa'. See ?coa_locs.")
   } else {
+<<<<<<< HEAD
     #Make sure proc_det was passed
     if(missing(proc_det)){
       stop("User did not supply proc_det. See ?map_coas for details.")
@@ -248,5 +256,8 @@ plot.coa <- function(coas, proc_det, ...){
       map_coas(coas = coas, proc_det = proc_det, ...)
       }
 
+=======
+    map_coas(coas, ...)
+>>>>>>> 42e5c4f8cc6d88e986fc4a19a967334acd811b56
   }
 }
