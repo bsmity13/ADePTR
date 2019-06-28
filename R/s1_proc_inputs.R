@@ -227,6 +227,10 @@ plot_sta_history <- function(proc_det, set.par=TRUE, ...) {
 #' @param leg.pos Indicates where the legend should be. Can be any \code{x}
 #' that the base \code{graphics} function \code{\link[graphics]{legend}}
 #' will accept. Defaults to the text string \code{"bottomleft"}.
+#' @param xlim Vector of length 2 giving the limits of the plot along
+#' the x-axis (longitude or easting).
+#' @param ylim Vector of length 2 giving the limits of the plot along the
+#' y-axis (latitude or northing).
 #' @param set.par \code{TRUE} or \code{FALSE}. Should the function change
 #' the graphical parameters or not? This should be \code{FALSE} if the
 #' user wishes to manually set the graphical parameters, \emph{e.g.}, so
@@ -438,7 +442,3 @@ plot.dets <- function(proc_det, which = "history", ...){
   }
 }
 
-#My new function
-my.new.function <- function(x){
-  print(x)
-}
