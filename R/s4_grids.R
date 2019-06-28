@@ -193,3 +193,67 @@ rasterize_dets <- function(det_locs, r = init_raster(sta = det_locs)){
                      background = NA)
   return(out.r)
 }
+
+#' Create a presence raster
+#'
+#' Converts a raster of counts to a raster of presence-only or
+#' presence-absence
+#'
+#' @usage raster_pres(r)
+#'
+#' @param r A raster
+#'
+#' @details This function sets any values >= 1 to 1. If the background
+#' values of the raster are NA, they remain NA in the output, allowing
+#' the raster to be interpreted as presence-only. If the background
+#' values of the raster are 0, then the result will be also contain 0s,
+#' allowing the raster to be interpreted as presence-abscence.
+#'
+#' @export
+raster_pres <- function(r){
+  #Get values
+  vals <- raster::getValues(r)
+  #Convert to presence only
+  vals[vals > 0] <- 1
+  #Set values
+  r.out <- raster::setValues(r, vals)
+}
+
+
+#' Create an overlap raster
+#'
+#' Takes multiple rasters of presence-only or presence-absence and
+#' calculates the overlap.
+#'
+#' @usage raster_overlap(..., background = NA)
+#'
+#' @param r A raster
+#'
+#' @details This function sums the values of all the input rasters
+#' and then replaces any 0 values with the background value.
+#'
+#' @export
+raster_overlap <- function(..., background = NA){
+
+  #Create list of rasters
+  rs <- list(...)
+
+  #Check that all inputs are rasters
+  r_check <- unlist(lapply(rs, function(x){class(x)=="RasterLayer"}))
+  if(any(!r_check)){
+    stop("All inputs must be of class 'RasterLayer'.")
+  }
+
+  #Stack rasters
+  r_stack <- raster::stack(...)
+
+  #Sum rasters
+  r_sum <- sum(r_stack, na.rm = TRUE)
+
+  #Change out background
+  r_sum_vals <- getValues(r_sum)
+  r_sum_vals[r_sum_vals==0] <- background
+  r_sum_out <- setValues(r_sum, r_sum_vals)
+
+  return(r_sum_out)
+}
