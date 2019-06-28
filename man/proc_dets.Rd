@@ -8,11 +8,12 @@ proc_dets(det, sta, ...)
 }
 \arguments{
 \item{det}{A \code{data.frame} of detections. Format should match the
-object \strong{detections} from \link{acoustic}.}
+object \strong{detections} from \link{acoustic} (`id`, `dt`, `rec_id`).}
 
 \item{sta}{A \code{data.frame} of the stations where receivers were
 located for a period of time. Format should match the object
-\strong{stations} from \link{acoustic}.}
+\strong{stations} from \link{acoustic} (`sta_id`, `rec_id`, `dt_dep`,
+`dt_ret`, `x`, `y`).}
 
 \item{...}{Additional arguments (not currently implemented)}
 }

@@ -4,7 +4,7 @@
 \alias{plot.dets}
 \title{Plot a \code{dets} object}
 \usage{
-\method{plot}{dets}(proc_det, which = "map", ...)
+\method{plot}{dets}(proc_det, which = "history", ...)
 }
 \arguments{
 \item{proc_det}{A \code{data.frame} of class \code{dets} as returned
@@ -13,7 +13,7 @@ by the function \code{\link{proc_dets}()}.}
 \item{which}{A character string for which plot to create. Defaults
 to \code{map}. See details below.}
 
-\item{...}{Additional parameters to pass to the plotting function.}
+\item{...}{Additional parameters to pass to the specific plotting function.}
 }
 \description{
 S3 method for plotting a \code{dets} object.
@@ -31,9 +31,9 @@ data(acoustic)
 #Process detections
 proc.det <- proc_dets(det = acoustic$detections, sta = acoustic$stations)
 
-#Map detections
+#Plot station history
 plot(proc.det)
 
-#Plot station history
-plot(proc.det, which = "history")
+#Map detections
+plot(proc.det, which = "map")
 }
