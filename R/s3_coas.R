@@ -234,6 +234,9 @@ map_coas <- function(proc_det, coas, coa.crs = 4326, coa.palette = viridis::viri
 #' \code{\link{coa_locs}()} to create the COAs.
 #' @param ... Additional arguments to pass to \code{\link{map_dets}()}.
 #'
+#' @details Calls \code{\link{map_dets}()} to do the plotting. See the help
+#' file for that function for more details.
+#'
 #' @export
 plot.coa <- function(coas, proc_det, ...){
   #Check class before proceeding

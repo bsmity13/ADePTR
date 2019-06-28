@@ -9,7 +9,16 @@
 \arguments{
 \item{coas}{An object of class \code{coa} to plot. Function
 \code{\link{coa_locs}()} creates this object.}
+
+\item{proc_det}{The \code{data.frame} of processed detections used by
+\code{\link{coa_locs}()} to create the COAs.}
+
+\item{...}{Additional arguments to pass to \code{\link{map_dets}()}.}
 }
 \description{
 S3 method for plotting a \code{coa} object.
+}
+\details{
+Calls \code{\link{map_dets}()} to do the plotting. See the help
+file for that function for more details.
 }
