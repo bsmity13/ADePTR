@@ -19,7 +19,8 @@ Should be either \code{"arithmetic"} or \code{"harmonic"}.}
 \item{...}{Additional arguments (not currently implemented)}
 }
 \value{
-Returns a \code{data.frame} of georeferenced centers of activity.
+Returns an object of class \code{coa} (also a \code{data.frame})
+ with georeferenced centers of activity.
 }
 \description{
 This function calculates Centers of Activity (COAs) by averaging

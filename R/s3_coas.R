@@ -42,7 +42,8 @@ harmonic_mean <- function(x){
 #' suggested by Simpfendorfer et al. (2002) for calculating centers of
 #' activity (COAs).
 #'
-#' @return Returns a \code{data.frame} of georeferenced centers of activity.
+#' @return Returns an object of class \code{coa} (also a \code{data.frame})
+#'  with georeferenced centers of activity.
 #'
 #' @seealso \code{\link{proc_dets}} for details on the formatting of the
 #' \code{data.frame} \code{proc_det}
@@ -114,7 +115,9 @@ coa_locs <- function(proc_det, Delta_t = "1 hour", mean_type = c("arithmetic", "
       arrange(id, dt) %>%
       as.data.frame
   }
-return(coas)
+  #Set S3 class to "coa"
+  class(coas) <- c("coa", class(coas))
+  return(coas)
 }
 
 #' Map Centers of Activity
@@ -218,4 +221,32 @@ map_coas <- function(proc_det, coas, coa.crs = 4326, coa.palette = viridis::viri
     on.exit(par(orig.par), add = TRUE)
   }
 
+}
+
+
+#' Plot a \code{coa} object
+#'
+#' S3 method for plotting a \code{coa} object.
+#'
+#' @param coas An object of class \code{coa} to plot. Function
+#' \code{\link{coa_locs}()} creates this object.
+#' @param proc_det The \code{data.frame} of processed detections used by
+#' \code{\link{coa_locs}()} to create the COAs.
+#' @param ... Additional arguments to pass to \code{\link{map_dets}()}.
+#'
+#' @export
+plot.coa <- function(coas, proc_det, ...){
+
+  #Check class before proceeding
+  if(!("coa" %in% class(coas))){
+    stop("Object must be of class 'coa'. See ?coa_locs.")
+  } else {
+    #Make sure proc_det was passed
+    if(missing(proc_det)){
+      stop("User did not supply proc_det. See ?map_coas for details.")
+    } else{
+      map_coas(coas = coas, proc_det = proc_det, ...)
+      }
+
+  }
 }

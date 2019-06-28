@@ -33,6 +33,12 @@ base.layers}.}
 that the base \code{graphics} function \code{\link[graphics]{legend}}
 will accept. Defaults to the text string \code{"bottomleft"}.}
 
+\item{xlim}{Vector of length 2 giving the limits of the plot along
+the x-axis (longitude or easting).}
+
+\item{ylim}{Vector of length 2 giving the limits of the plot along the
+y-axis (latitude or northing).}
+
 \item{set.par}{\code{TRUE} or \code{FALSE}. Should the function change
 the graphical parameters or not? This should be \code{FALSE} if the
 user wishes to manually set the graphical parameters, \emph{e.g.}, so
