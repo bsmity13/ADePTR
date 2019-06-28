@@ -184,7 +184,10 @@ rasterize_dets <- function(det_locs, r = init_raster(sta = det_locs)){
   #Internal note: this function needs to be updated so that it checks
     #any 'r' provided by the user
 
-  out.r <- raster::rasterize(x = det_locs[,c("x", "y")],
+  #Grab x and y coords of locations and coerce to matrix
+  locs <- as.matrix(det_locs[,c("x", "y")])
+
+  out.r <- raster::rasterize(x = locs,
                      y = r,
                      fun = "count",
                      background = NA)
