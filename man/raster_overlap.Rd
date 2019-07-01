@@ -7,7 +7,11 @@
 raster_overlap(..., background = NA)
 }
 \arguments{
-\item{r}{A raster}
+\item{...}{Any number of \code{\link[raster:Raster-class]{RasterLayer}} objects
+to sum.}
+
+\item{background}{A value to replace any 0 values with. Either \code{0}
+or \code{NA} are the most logical choices.}
 }
 \description{
 Takes multiple rasters of presence-only or presence-absence and
@@ -15,5 +19,65 @@ calculates the overlap.
 }
 \details{
 This function sums the values of all the input rasters
-and then replaces any 0 values with the background value.
+and then replaces any 0 values with the background value. Note that
+this function will accept rasters with values > 1. If that is the
+case, the user should take caution not to interpret the values as
+the number of overlapping individuals, but rather, as the sum of all
+input rasters.
+}
+\examples{
+
+#Load example data
+data(acoustic)
+
+#Process detections
+proc.det <- proc_dets(det = acoustic$detections, sta = acoustic$stations)
+
+#Create COAs
+coas.60 <- coa_locs(proc.det)
+
+#Initialize a base raster
+r.sa <- init_raster(study_area = acoustic$study_area, res = 0.005)
+
+#Use tidy workflow to create presence for multiple individuals
+
+library(dplyr)
+
+#Animal 1
+ani1 <- coas.60 \%>\%
+filter(id == unique(id)[1]) \%>\%
+rasterize_dets(r.sa) \%>\%
+raster_pres()
+
+#Animal 2
+ani2 <- coas.60 \%>\%
+filter(id == unique(id)[2]) \%>\%
+rasterize_dets(r.sa) \%>\%
+raster_pres()
+
+#Animal 3
+ani3 <- coas.60 \%>\%
+filter(id==unique(id)[3]) \%>\%
+rasterize_dets(r.sa) \%>\%
+raster_pres()
+
+#Animal 4
+ani4 <- coas.60 \%>\%
+filter(id==unique(id)[4]) \%>\%
+rasterize_dets(r.sa) \%>\%
+raster_pres()
+
+#Calculate overlap
+#Presence-only
+ani_over <- raster_overlap(ani1, ani2, ani3, ani4)
+plot(ani_over)
+plot(acoustic$study_area, add=TRUE)
+plot(acoustic$land, add=TRUE, col="wheat")
+
+#Presence-abscence
+ani_over0 <- raster_overlap(ani1, ani2, ani3, ani4, background = 0)
+plot(ani_over0)
+plot(acoustic$study_area, add=TRUE)
+plot(acoustic$land, add=TRUE, col="wheat")
+
 }

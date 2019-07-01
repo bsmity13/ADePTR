@@ -20,3 +20,54 @@ the raster to be interpreted as presence-only. If the background
 values of the raster are 0, then the result will be also contain 0s,
 allowing the raster to be interpreted as presence-abscence.
 }
+\examples{
+
+#Load example data
+data(acoustic)
+
+#Process detections
+proc.det <- proc_dets(det = acoustic$detections, sta = acoustic$stations)
+
+#Create COAs
+coas.60 <- coa_locs(proc.det)
+
+#Initialize a base raster
+r.sa <- init_raster(study_area = acoustic$study_area, res = 0.005)
+
+#Rasterize COAs
+coa.r <- rasterize_dets(det_locs = coas.60, r = r.sa)
+
+#Presence-only layer for all animals in the dataset
+coa.pres <- raster_pres(coa.r)
+#Plot
+plot(coa.pres)
+
+##Use tidy workflow to create presence for multiple individuals
+
+library(dplyr)
+
+#Animal 1
+ani1 <- coas.60 \%>\%
+filter(id == unique(id)[1]) \%>\%
+rasterize_dets(r.sa) \%>\%
+raster_pres()
+
+#Animal 2
+ani2 <- coas.60 \%>\%
+filter(id == unique(id)[2]) \%>\%
+rasterize_dets(r.sa) \%>\%
+raster_pres()
+
+#Animal 3
+ani3 <- coas.60 \%>\%
+filter(id==unique(id)[3]) \%>\%
+rasterize_dets(r.sa) \%>\%
+raster_pres()
+
+#Animal 4
+ani4 <- coas.60 \%>\%
+filter(id==unique(id)[4]) \%>\%
+rasterize_dets(r.sa) \%>\%
+raster_pres()
+
+}
