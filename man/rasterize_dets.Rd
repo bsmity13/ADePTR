@@ -17,7 +17,8 @@ locations. Defaults to a call to \code{\link{init_rast}()} with
 \code{det_locs} passed as the argument \code{sta}}
 }
 \value{
-Returns an object of class \code{RasterLayer} with values equal
+Returns an object of class
+\code{\link[raster:Raster-class]{RasterLayer}} with values equal
 to the number of detections in each raster cell.
 }
 \description{

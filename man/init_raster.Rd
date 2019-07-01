@@ -36,7 +36,8 @@ the \code{crs} argument. Defaults to \code{(CRS("+init=epsg:4326"))},
 indicating EPSG code 4326 for WGS 84 lat/long.}
 }
 \value{
-Returns an object of class \code{RasterLayer}
+Returns an object of class
+\code{\link[raster:Raster-class]{RasterLayer}}
 }
 \description{
 This function can take one of user-defined x- and y-limits, station

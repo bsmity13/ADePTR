@@ -7,11 +7,11 @@
 raster_overlap(..., background = NA)
 }
 \arguments{
-\item{...}{Any number of \code{\link[raster:Raster-class]{RasterLayer}} objects
-to sum.}
+\item{...}{Any number of \code{\link[raster:Raster-class]{RasterLayer}}
+objects to sum.}
 
 \item{background}{A value to replace any 0 values with. Either \code{0}
-or \code{NA} are the most logical choices.}
+or \code{NA} (the default) are the most logical choices.}
 }
 \description{
 Takes multiple rasters of presence-only or presence-absence and

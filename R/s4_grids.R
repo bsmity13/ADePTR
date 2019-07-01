@@ -44,7 +44,8 @@
 #'   \item{\code{study_area}} (polygon of class \code{\link[sf:sfc]{sfc}})
 #' }
 #'
-#' @return Returns an object of class \code{RasterLayer}
+#' @return Returns an object of class
+#' \code{\link[raster:Raster-class]{RasterLayer}}
 #'
 #' @examples
 #' #Load sample data
@@ -145,7 +146,8 @@ init_raster <- function(xlim = NULL, ylim = NULL, sta = NULL,
 #' @details Calls the function \code{\link{raster::rasterize}()} to generate
 #' the raster. Uses the function \code{'count'}
 #'
-#' @return Returns an object of class \code{RasterLayer} with values equal
+#' @return Returns an object of class
+#' \code{\link[raster:Raster-class]{RasterLayer}} with values equal
 #' to the number of detections in each raster cell.
 #'
 #' @examples
