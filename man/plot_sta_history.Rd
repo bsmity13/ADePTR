@@ -4,15 +4,19 @@
 \alias{plot_sta_history}
 \title{Plots processed station history}
 \usage{
-plot_sta_history(proc_det, set.par = TRUE, ...)
+plot_sta_history(proc_det, set_par = TRUE, use_ggplot = FALSE, ...)
 }
 \arguments{
 \item{proc_det}{A \code{data.frame} of class \code{dets} as returned
 by the function \code{\link{proc_dets}()}.}
 
-\item{set.par}{\code{TRUE} or \code{FALSE}. Should the function change
+\item{set_par}{\code{TRUE} or \code{FALSE}. Should the function change
 the graphical parameters or not? (This should be \code{FALSE} only if the
 user wishes to manually set the graphical parameters).}
+
+\item{use_ggplot}{\code{TRUE} or \code{FALSE}. Should the plot be
+made using \code{ggplot2}? Defaults to \code{FALSE} and uses base R
+plotting.}
 
 \item{...}{Additional arguments (not currently implemented)}
 }
@@ -35,6 +39,14 @@ proc.det <- proc_dets(det = acoustic$detections, sta = acoustic$stations)
 
 #Plot station history
 plot_sta_history(proc.det)
+
+#Plot station history with ggplot2
+library(ggplot2)
+(p <- plot_sta_history(proc.det, use_ggplot = TRUE)) #ggplot
+#Change options on ggplot
+p +
+theme_bw() +
+labs(title = "Detection History")
 
 }
 \seealso{

@@ -118,8 +118,8 @@ proc_dets <- function(det, sta){
   if (length(rem) > 0) {
     #Report to the user.
     warning(paste0("\n", length(rem), " out of ", nrow(res),
-                " detections were not successfully associated with a station.",
-                "\n\nThese detections have been removed."))
+                   " detections were not successfully associated with a station.",
+                   "\n\nThese detections have been removed."))
     #Drop those rows
     res <- res[-rem,]
   }
@@ -144,13 +144,16 @@ is.dets <- function(x) {
 #' This function takes a processed detection history returned by
 #' \code{\link{proc_dets}()} and plots the station history.
 #'
-#' @usage plot_sta_history(proc_det, set.par = TRUE, ...)
+#' @usage plot_sta_history(proc_det, set_par = TRUE, use_ggplot = FALSE, ...)
 #'
 #' @param proc_det A \code{data.frame} of class \code{dets} as returned
 #' by the function \code{\link{proc_dets}()}.
-#' @param set.par \code{TRUE} or \code{FALSE}. Should the function change
+#' @param set_par \code{TRUE} or \code{FALSE}. Should the function change
 #' the graphical parameters or not? (This should be \code{FALSE} only if the
 #' user wishes to manually set the graphical parameters).
+#' @param use_ggplot \code{TRUE} or \code{FALSE}. Should the plot be
+#' made using \code{ggplot2}? Defaults to \code{FALSE} and uses base R
+#' plotting.
 #' @param ... Additional arguments (not currently implemented)
 #'
 #' @details Details here
@@ -170,33 +173,59 @@ is.dets <- function(x) {
 #' #Plot station history
 #' plot_sta_history(proc.det)
 #'
+#' #Plot station history with ggplot2
+#' library(ggplot2)
+#' (p <- plot_sta_history(proc.det, use_ggplot = TRUE)) #ggplot
+#' #Change options on ggplot
+#' p +
+#' theme_bw() +
+#' labs(title = "Detection History")
+#'
 #' @export
-plot_sta_history <- function(proc_det, set.par=TRUE, ...) {
+plot_sta_history <- function(proc_det, set_par=TRUE, use_ggplot = FALSE, ...) {
   #Check class
   if(!is.dets(proc_det)){
     stop("\n  Object proc_det must be of class 'dets'.
          See ?proc_dets for conversion.")
   }
-  #Store original parameters
-  orig.par <- par(no.readonly = TRUE)
-  #Change parameters
-  if(set.par){
-    par(mar = c(2.5, 6.5, 2.0, 1.0),
-        cex = 0.8)
-  }
+
   #Factor the station id
   proc_det$sta_id <- factor(proc_det$sta_id)
   levs <- levels(proc_det$sta_id)
-  #Plot
-  {plot(x = proc_det$dt, y = proc_det$sta_id, pch = 16,
-       axes = FALSE, xlab=NA, ylab=NA, main="Detections by Station")
-  axis.POSIXct(1, proc_det$dt)
-  axis(2, labels=levs, at=1:length(levs), las=2)
-  box()}
-  #Revert to original parameters
-  if(set.par){
-    on.exit(par(orig.par), add = TRUE)
+
+  #Decide whether or not to use ggplot
+  if (use_ggplot){
+    ##ggplot Plotting
+    p <- ggplot(data = proc_det, aes(x = dt, y = sta_id)) +
+      geom_point() +
+      xlab("Date") +
+      ylab("Station")
+
+    return(p)
+
+  } else {
+    ##Base R Plotting
+
+    #Store original parameters
+    orig.par <- par(no.readonly = TRUE)
+    #Change parameters
+    if(set_par){
+      par(mar = c(2.5, 6.5, 2.0, 1.0),
+          cex = 0.8)
+    }
+
+    #Plot
+    {plot(x = proc_det$dt, y = proc_det$sta_id, pch = 16,
+          axes = FALSE, xlab=NA, ylab=NA, main="Detections by Station")
+      axis.POSIXct(1, proc_det$dt)
+      axis(2, labels=levs, at=1:length(levs), las=2)
+      box()}
+    #Revert to original parameters
+    if(set_par){
+      on.exit(par(orig.par), add = TRUE)
+    }
   }
+
 }
 
 #' Plots a map of station locations
@@ -205,41 +234,53 @@ plot_sta_history <- function(proc_det, set.par=TRUE, ...) {
 #' \code{\link{proc_dets}()} and plots a map showing the relative number
 #' of detections per station.
 #'
-#' @usage map_dets(proc_det, sta.crs = 4326, base.layers = NULL,
-#'              base.borders = NULL, base.cols = NULL,
-#'              sta.col = "black", sta.bg = "red",
-#'              leg.pos = "bottomleft", set.par = TRUE, ...)
+#' @usage map_dets(proc_det, sta_crs = 4326, base_layers = NULL,
+#'              base_borders = NULL, base_cols = NULL,
+#'              sta_col = "black", sta_bg = "red",
+#'              leg_pos = "bottomleft", set_par = TRUE, ...)
 #'
 #' @param proc_det A \code{data.frame} of class \code{dets} as returned
 #' by the function \code{\link{proc_dets}()}.
-#' @param sta.crs A coordinate reference system to use for the station
+#' @param sta_crs A coordinate reference system to use for the station
 #' locations. Used by \code{\link[sf]{st_sf}} as the \code{crs} argument.
 #' Defaults to integer 4326, indicating EPSG code 4326 for WGS 84 lat/long.
-#' @param base.layers A \code{list} of georeferenced vectors to be plotted
+#' @param base_layers A \code{list} of georeferenced vectors to be plotted
 #' as the basemap under the stations. Designed to be \code{\link[sf]{sfc}}
 #' \code{LINESTRING} or \code{POLYGON} objects.
-#' @param base.borders A \code{list} of colors to used to outline the
-#' polygons listed in \code{base.layers}. Should be the same length as
-#' \code{base.layers}.
-#' @param base.cols A \code{list} of colors to used to fill the polygons
-#' listed in \code{base.layers}.  Should be the same length as \code{
-#' base.layers}.
-#' @param leg.pos Indicates where the legend should be. Can be any \code{x}
+#' @param base_borders A \code{list} of colors to used to outline the
+#' polygons listed in \code{base_layers}. Should be the same length as
+#' \code{base_layers}.
+#' @param base_cols A \code{list} of colors to used to fill the polygons
+#' listed in \code{base_layers}.  Should be the same length as \code{
+#' base_layers}.
+#' @param leg_pos Indicates where the legend should be. Can be any \code{x}
 #' that the base \code{graphics} function \code{\link[graphics]{legend}}
-#' will accept. Defaults to the text string \code{"bottomleft"}.
+#' will accept. Defaults to the text string \code{"bottomleft"}. Not
+#' applicable if \code{use_ggplot} is \code{TRUE}.
 #' @param xlim Vector of length 2 giving the limits of the plot along
 #' the x-axis (longitude or easting).
 #' @param ylim Vector of length 2 giving the limits of the plot along the
 #' y-axis (latitude or northing).
-#' @param set.par \code{TRUE} or \code{FALSE}. Should the function change
+#' @param set_par \code{TRUE} or \code{FALSE}. Should the function change
 #' the graphical parameters or not? This should be \code{FALSE} if the
 #' user wishes to manually set the graphical parameters, \emph{e.g.}, so
-#' that they can still add to the plot manually after it is generated.
+#' that they can still add to the plot manually after it is generated. Not
+#' applicable if \code{use_ggplot} is \code{TRUE}.
 #' @param return_df \code{TRUE} or \code{FALSE}. Should the function also
 #' return a \code{data.frame} of aggregated station detections?
+#' @param use_ggplot \code{TRUE} or \code{FALSE}. Should the plot be
+#' made using \code{ggplot2}? Defaults to \code{FALSE} and uses base R
+#' plotting. \emph{Note}: if both \code{return_df} and \code{use_ggplot}
+#' are \code{TRUE}, then function returns a \code{list}. See details.
 #' @param ... Additional arguments (not currently implemented)
 #'
-#' @details Details here
+#' @details Details here.
+#'
+#' Note that if both \code{return_df} and \code{use_ggplot}
+#' are \code{TRUE}, then function returns a \code{list} with elements
+#' \code{df} containing the data.frame of aggregated detections and
+#' \code{ggplot} containing the \code{ggplot} object for the user to
+#' further manipulate.
 #'
 #'
 #' @return Plots a figure of station activity over time.
@@ -258,32 +299,26 @@ plot_sta_history <- function(proc_det, set.par=TRUE, ...) {
 #' map_dets(proc.det)
 #'
 #' #Map detections with custom settings
-#' map_dets(proc_det = proc.det, sta.crs = 4326,
-#'     base.layers = list(acoustic$study_area, acoustic$land),
-#'     base.cols = list("gray30", "wheat"), base.borders = list(NA, "seagreen"),
+#' map_dets(proc_det = proc.det, sta_crs = 4326,
+#'     base_layers = list(acoustic$study_area, acoustic$land),
+#'     base_cols = list("gray30", "wheat"), base_borders = list(NA, "seagreen"),
 #'     xlim=c(-64.628, -64.612), ylim=c(17.770, 17.795),
-#'     leg.pos = "topleft", sta.col = "blue", sta.bg = "orange")
+#'     leg_pos = "topleft", sta_col = "blue", sta_bg = "orange")
 #'
 #' @export
-map_dets <- function(proc_det, sta.crs = 4326, base.layers = NULL,
-                     base.borders = NULL, base.cols = NULL,
-                     sta.col = "black", sta.bg = "red",
-                     leg.pos = "bottomleft",
-                     xlim = NULL, ylim = NULL, set.par = TRUE,
-                     return_df = TRUE, ...) {
+map_dets <- function(proc_det, sta_crs = 4326, base_layers = NULL,
+                     base_borders = NULL, base_cols = NULL,
+                     sta_col = "black", sta_bg = "red",
+                     leg_pos = "bottomleft",
+                     xlim = NULL, ylim = NULL, set_par = TRUE,
+                     return_df = TRUE, use_ggplot = FALSE, ...) {
   #Check class
   if(!is.dets(proc_det)){
     stop("\n  Object proc_det must be of class 'dets'.
   See ?proc_dets for conversion.")
   }
-  #Store original parameters
-  orig.par <- par(no.readonly = TRUE)
-  #Change parameters
-  if(set.par){
-    par(mar = c(0.1, 0.1, 0.1, 0.1),
-        cex = 0.8)
-  }
 
+  ##Data pre-processing
   #Aggregate station detections
   stas <- proc_det %>%
     group_by(sta_id) %>%
@@ -292,18 +327,46 @@ map_dets <- function(proc_det, sta.crs = 4326, base.layers = NULL,
     mutate(sz = cut(n_det, breaks=pretty(n_det), labels=paste0("<", pretty(n_det)[-1])))
 
   #Create an sf object
-  sta.sp <- sf::st_geometry(
-    sf::st_as_sf(stas, coords = c("x", "y"),
-                 dim = "XY", crs = sta.crs))
+  sta.sp <- sf::st_sf(id = stas$sta_id,
+                      sz = stas$sz,
+                      geometry = sf::st_geometry(
+                        sf::st_as_sf(stas, coords = c("x", "y"),
+                                     dim = "XY", crs = sta_crs)))
 
   #Find xlim and ylim by checking extent of all layers
   #Combine all layers in a list
-  if(is.null(base.layers)){
+  if(is.null(base_layers)){
     all.layers <- list()
   } else {
-    all.layers <- base.layers
+    all.layers <- base_layers
   }
-  all.layers[[length(base.layers)+1]] <- sta.sp
+  all.layers[[length(base_layers)+1]] <- sta.sp
+
+  if(!is.null(base_layers)){
+    #First check that the color lists are the right lengths
+    ##Borders
+    if (!is.null(base_borders)){
+      #Make sure it is same length as base_layers
+      if(length(base_layers) != length(base_borders)){
+        stop("If you specify 'base_borders', the list must be the
+               same length as 'base_layers'. Note that you can pad this
+               list with NAs where necessary.")
+      }
+    } else {
+      base_borders <- rep(NA, length(base_layers))
+    }
+    ##Colors
+    if(!is.null(base_cols)){
+      #Make sure it has the same length as base_layers
+      if(length(base_layers) != length(base_cols)){
+        stop("If you specify 'base_cols', the list must be the
+               same length as 'base_layers'. Note that you can pad this
+               list with NAs where necessary.")
+      }
+    } else {
+      base_cols <- rep(NA, length(base_layers))
+    }
+  }
 
   if (is.null(xlim)){  #If xlim is not specified, pull from layers
     #xmin
@@ -323,82 +386,124 @@ map_dets <- function(proc_det, sta.crs = 4326, base.layers = NULL,
     ylim <- c(ymin, ymax)
   }
 
-  #Plot blank basemap
-  #Create sf point object
-  dummy.point <- sf::st_point(x = c(mean(xlim), mean(ylim)), dim="XY")
-  plot(dummy.point, xlim = xlim, ylim = ylim, pch=NA)
+  #Decide whether to use ggplot or base
+  if(use_ggplot){
+    #ggplot Plotting
 
-  #Add to basemap first if base.layers is not NULL
-  if(!is.null(base.layers)){
-    #First check that the color lists are the right lengths
-    ##Borders
-    if (!is.null(base.borders)){
-      #Make sure it is same length as base.layers
-      if(length(base.layers) != length(base.borders)){
-        stop("If you specify 'base.borders', the list must be the
-               same length as 'base.layers'. Note that you can pad this
-               list with NAs where necessary.")
-      }
-    } else {
-      base.borders <- rep(NA, length(base.layers))
-    }
-    ##Colors
-    if(!is.null(base.cols)){
-      #Make sure it has the same length as base.layers
-      if(length(base.layers) != length(base.cols)){
-        stop("If you specify 'base.cols', the list must be the
-               same length as 'base.layers'. Note that you can pad this
-               list with NAs where necessary.")
-      }
-    } else {
-      base.cols <- rep(NA, length(base.layers))
-    }
-    #Now that we have the colors, plot each layer
-    #Loop through each layer
-    for (i in 1:length(base.layers)){
+    #Start the plot with the station data
+    p <- ggplot() +
+      geom_sf(data = sta.sp, aes(size = sz),
+              pch = 21, color = sta_col, fill = sta_bg,
+              show.legend = "point")
 
-      #Should be either "sfc_LINESTRING" or "sfc_POLYGON"
-      if(!any(class(base.layers[[i]]) %in%
-              c("sfc_LINESTRING", "sfc_POLYGON"))){
-
-        stop(paste("Element", i, "of list 'base.layers' is neither an
-                    'sfc_LINESTRING' nor 'sfc_POLYGON'."))
-
-      } else { #As long as the classes are right
-
+    #Add basemap if applicable
+    if(!is.null(base_layers)){
+      for(i in 1:length(base_layers)){
         #If it's a LINESTRING
-        if (any(class(base.layers[[i]])=="sfc_LINESTRING")){
-          plot(base.layers[[i]], add=TRUE,
-               col=ifelse(is.na(base.cols[[i]]), 1, base.cols[[i]]))
+        if (any(class(base_layers[[i]])=="sfc_LINESTRING")){
+          p <- p +
+            geom_sf(data = base_layers[[i]],
+                    color = ifelse(is.na(base_cols[[i]]), 1, base_cols[[i]]))
         }
 
         #If it's a POLYGON
-        if (any(class(base.layers[[i]])=="sfc_POLYGON")){
-          plot(base.layers[[i]], add=TRUE,
-               col=base.cols[[i]],
-               border=ifelse(is.na(base.borders[[i]]), 1, base.borders[[i]]))
+        if (any(class(base_layers[[i]])=="sfc_POLYGON")){
+          p <- p +
+            geom_sf(data = base_layers[[i]],
+                    color = ifelse(is.na(base_borders[[i]]), 1, base_borders[[i]]),
+                    fill = ifelse(is.na(base_cols[[i]]), 1, base_cols[[i]]))
         }
       }
     }
-  } #End of basemap plotting
 
-  #Plot stations
-  plot(sta.sp, add = TRUE,
-       pch = 21, col = sta.col, bg = sta.bg,
-       cex = as.numeric(stas$sz)/2)
-  #Plot legend
-  legend(x = leg.pos, legend = levels(stas$sz),
-         pch = 21, col = sta.col, pt.bg = sta.bg,
-         pt.cex = (1:length(levels(stas$sz)))/2,
-         title = expression(bold("Detections")))
+    #Now change theme, limits, etc.
+    p <- p +
+      ggspatial::annotation_scale(location = "bl", width_hint = 0.5) +
+      coord_sf(crs = st_crs(sta_crs),
+               xlim = xlim, ylim = ylim, expand = FALSE) +
+      labs(size = "Detections") +
+      theme_bw() +
+      theme(axis.title.x = element_blank(),
+            axis.title.y = element_blank())
+
+    #Decide what to return
+    if(return_df){
+      #Must return a list, but first print plot
+      print(p)
+      out <- list(df = stas, ggplot = p)
+      return(out)
+    } else {
+      return(p)
+    }
+
+  } else {
+    ##Base R Plotting
+
+    #Store original parameters
+    orig.par <- par(no.readonly = TRUE)
+    #Change parameters
+    if(set_par){
+      par(mar = c(0.1, 0.1, 0.1, 0.1),
+          cex = 0.8)
+    }
+
+    #Create sf point object
+    dummy.point <- sf::st_point(x = c(mean(xlim), mean(ylim)), dim="XY")
+    plot(dummy.point, xlim = xlim, ylim = ylim, pch=NA)
 
 
-  #Revert to original parameters
-  if(set.par){
-    on.exit(par(orig.par), add = TRUE)
+    if(!is.null(base_layers)){
+      #Now that we have the colors, plot each layer
+      #Loop through each layer
+      for (i in 1:length(base_layers)){
+
+        #Should be either "sfc_LINESTRING" or "sfc_POLYGON"
+        if(!any(class(base_layers[[i]]) %in%
+                c("sfc_LINESTRING", "sfc_POLYGON"))){
+
+          stop(paste("Element", i, "of list 'base_layers' is neither an
+                    'sfc_LINESTRING' nor 'sfc_POLYGON'."))
+
+        } else { #As long as the classes are right
+
+          #If it's a LINESTRING
+          if (any(class(base_layers[[i]])=="sfc_LINESTRING")){
+            plot(base_layers[[i]], add=TRUE,
+                 col=ifelse(is.na(base_cols[[i]]), 1, base_cols[[i]]))
+          }
+
+          #If it's a POLYGON
+          if (any(class(base_layers[[i]])=="sfc_POLYGON")){
+            plot(base_layers[[i]], add=TRUE,
+                 col=base_cols[[i]],
+                 border=ifelse(is.na(base_borders[[i]]), 1, base_borders[[i]]))
+          }
+        }
+      }
+    } #End of basemap plotting
+
+    #Plot stations
+    plot(sta.sp$geometry, add = TRUE,
+         pch = 21, col = sta_col, bg = sta_bg,
+         cex = as.numeric(stas$sz)/2)
+    #Plot legend
+    legend(x = leg_pos, legend = levels(stas$sz),
+           pch = 21, col = sta_col, pt.bg = sta_bg,
+           pt.cex = (1:length(levels(stas$sz)))/2,
+           title = expression(bold("Detections")))
+
+    #Revert to original parameters
+    if(set_par){
+      on.exit(par(orig.par), add = TRUE)
+    }
+
+    #Return the aggregated data
+    return(stas)
   }
-  #Return the aggregated data
-  return(stas)
+
+
+
+
 }
 
 #' Plot a \code{dets} object
