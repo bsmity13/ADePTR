@@ -4,34 +4,35 @@
 \alias{map_dets}
 \title{Plots a map of station locations}
 \usage{
-map_dets(proc_det, sta.crs = 4326, base.layers = NULL,
-             base.borders = NULL, base.cols = NULL,
-             sta.col = "black", sta.bg = "red",
-             leg.pos = "bottomleft", set.par = TRUE, ...)
+map_dets(proc_det, sta_crs = 4326, base_layers = NULL,
+             base_borders = NULL, base_cols = NULL,
+             sta_col = "black", sta_bg = "red",
+             leg_pos = "bottomleft", set_par = TRUE, ...)
 }
 \arguments{
 \item{proc_det}{A \code{data.frame} of class \code{dets} as returned
 by the function \code{\link{proc_dets}()}.}
 
-\item{sta.crs}{A coordinate reference system to use for the station
+\item{sta_crs}{A coordinate reference system to use for the station
 locations. Used by \code{\link[sf]{st_sf}} as the \code{crs} argument.
 Defaults to integer 4326, indicating EPSG code 4326 for WGS 84 lat/long.}
 
-\item{base.layers}{A \code{list} of georeferenced vectors to be plotted
+\item{base_layers}{A \code{list} of georeferenced vectors to be plotted
 as the basemap under the stations. Designed to be \code{\link[sf]{sfc}}
 \code{LINESTRING} or \code{POLYGON} objects.}
 
-\item{base.borders}{A \code{list} of colors to used to outline the
-polygons listed in \code{base.layers}. Should be the same length as
-\code{base.layers}.}
+\item{base_borders}{A \code{list} of colors to used to outline the
+polygons listed in \code{base_layers}. Should be the same length as
+\code{base_layers}.}
 
-\item{base.cols}{A \code{list} of colors to used to fill the polygons
-listed in \code{base.layers}.  Should be the same length as \code{
-base.layers}.}
+\item{base_cols}{A \code{list} of colors to used to fill the polygons
+listed in \code{base_layers}.  Should be the same length as \code{
+base_layers}.}
 
-\item{leg.pos}{Indicates where the legend should be. Can be any \code{x}
+\item{leg_pos}{Indicates where the legend should be. Can be any \code{x}
 that the base \code{graphics} function \code{\link[graphics]{legend}}
-will accept. Defaults to the text string \code{"bottomleft"}.}
+will accept. Defaults to the text string \code{"bottomleft"}. Not
+applicable if \code{use_ggplot} is \code{TRUE}.}
 
 \item{xlim}{Vector of length 2 giving the limits of the plot along
 the x-axis (longitude or easting).}
@@ -39,13 +40,19 @@ the x-axis (longitude or easting).}
 \item{ylim}{Vector of length 2 giving the limits of the plot along the
 y-axis (latitude or northing).}
 
-\item{set.par}{\code{TRUE} or \code{FALSE}. Should the function change
+\item{set_par}{\code{TRUE} or \code{FALSE}. Should the function change
 the graphical parameters or not? This should be \code{FALSE} if the
 user wishes to manually set the graphical parameters, \emph{e.g.}, so
-that they can still add to the plot manually after it is generated.}
+that they can still add to the plot manually after it is generated. Not
+applicable if \code{use_ggplot} is \code{TRUE}.}
 
 \item{return_df}{\code{TRUE} or \code{FALSE}. Should the function also
 return a \code{data.frame} of aggregated station detections?}
+
+\item{use_ggplot}{\code{TRUE} or \code{FALSE}. Should the plot be
+made using \code{ggplot2}? Defaults to \code{FALSE} and uses base R
+plotting. \emph{Note}: if both \code{return_df} and \code{use_ggplot}
+are \code{TRUE}, then function returns a \code{list}. See details.}
 
 \item{...}{Additional arguments (not currently implemented)}
 }
@@ -58,7 +65,13 @@ This function takes a processed detection history returned by
 of detections per station.
 }
 \details{
-Details here
+Details here.
+
+Note that if both \code{return_df} and \code{use_ggplot}
+are \code{TRUE}, then function returns a \code{list} with elements
+\code{df} containing the data.frame of aggregated detections and
+\code{ggplot} containing the \code{ggplot} object for the user to
+further manipulate.
 }
 \examples{
 #Load the example data set
@@ -71,11 +84,11 @@ proc.det <- proc_dets(det = acoustic$detections, sta = acoustic$stations)
 map_dets(proc.det)
 
 #Map detections with custom settings
-map_dets(proc_det = proc.det, sta.crs = 4326,
-    base.layers = list(acoustic$study_area, acoustic$land),
-    base.cols = list("gray30", "wheat"), base.borders = list(NA, "seagreen"),
+map_dets(proc_det = proc.det, sta_crs = 4326,
+    base_layers = list(acoustic$study_area, acoustic$land),
+    base_cols = list("gray30", "wheat"), base_borders = list(NA, "seagreen"),
     xlim=c(-64.628, -64.612), ylim=c(17.770, 17.795),
-    leg.pos = "topleft", sta.col = "blue", sta.bg = "orange")
+    leg_pos = "topleft", sta_col = "blue", sta_bg = "orange")
 
 }
 \seealso{
