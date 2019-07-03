@@ -68,7 +68,7 @@ raster_conduct <- function(sa_rast, impassable, impassable_value = 100){
 #' any number of individuals.
 #'
 #' @export
-str_path <- function(det_locs){
+str_paths <- function(det_locs){
 
   #Make sure "id" is in the data.frame of det_locs
   if(!("id" %in% names(det_locs))){
@@ -98,49 +98,7 @@ str_path <- function(det_locs){
 #' Create least cost paths between each location
 #'
 #' Creates least cost paths as line objects between each location for
-#' a single individual.
-#'
-#' @param det_locs_ind A \code{data.frame} of georeferenced acoustic
-#' detections, subset for a single individual. Could be, \emph{e.g.},
-#' the \code{data.frame} returned by \code{\link{proc_dets}()} or the
-#' \code{data.frame} returned by \code{\link{coa_locs}()}, subset to a
-#' single individual.
-#' @param tl A \code{\link[gdistance:transition]{TransitionLayer}}
-#' object used to calculate least cost path.
-#'
-#' @return Returns an boject of class \code{lcp_ind}, which is also
-#' a \code{tbl_df}, \code{tbl}, and \code{data.frame}.
-#'
-#' @details This function is intended to be called internally by the
-#' function \code{\link{lc_path}()}.
-#'
-#' @export
-lc_path_ind <- function(det_locs_ind, tl){
-
-  cat(paste0("\n  Calculating path for ID: ", unique(det_locs_ind$id)))
-
-  lcp_ind <- det_locs_ind %>%
-    arrange(dt) %>%
-    mutate(row = row_number()) %>%
-    filter(!is.na(x2)) %>%
-    group_by(row) %>%
-    mutate(geom = sf::st_as_sfc(
-      gdistance::shortestPath(tl,
-                              c(x1, y1),
-                              c(x2, y2),
-                              output = "SpatialLines"))) %>%
-    ungroup() %>%
-    mutate(n_pts = sapply(geom, length)/2)
-
-  class(lcp_ind) <- c("lcp_ind", class(lcp_ind))
-
-  return(lcp_ind)
-}
-
-#' Create least cost paths between each location
-#'
-#' Creates least cost paths as line objects between each location for
-#' multiple individuals.
+#' any number of individuals.
 #'
 #' @param det_locs A \code{data.frame} of georeferenced acoustic
 #' detections, subset for a single individual. Could be, \emph{e.g.},
@@ -156,9 +114,7 @@ lc_path_ind <- function(det_locs_ind, tl){
 #' \code{\link{lc_path_ind}} for details.
 #'
 #' @details Estimating the least cost paths between a large number of
-#' locations can be time consuming. To help with this, the function
-#' reports to the user its progress by printing to the console which
-#' ID it is currently working on.
+#' locations can be time consuming.
 #'
 #' @examples
 #'
@@ -178,10 +134,10 @@ lc_path_ind <- function(det_locs_ind, tl){
 #' conduct <- raster_conduct(sa_rast = r.cond, impassable = acoustic$land)
 #'
 #' #Create least-cost paths
-#' lcps <- lc_path(det_locs = coas.6h, conductance = conduct)
+#' lcps <- lc_paths(det_locs = coas.6h, conductance = conduct)
 #'
 #' @export
-lc_path <- function(det_locs, conductance){
+lc_paths <- function(det_locs, conductance){
 
   #Make sure "id" is in the data.frame of det_locs
   if(!("id" %in% names(det_locs))){
@@ -196,47 +152,24 @@ lc_path <- function(det_locs, conductance){
   #Apply geoCorrection
   tl <- geoCorrection(tl, type = "c", multpl = FALSE)
 
-  #Count how many unique ids there are
-  n_ids <- length(unique(det_locs$id))
-
-  #Report to user
-  cat(paste0("\nConstructing least-cost paths for ", n_ids, " IDs..."))
-
-  #Process
-  paths <- det_locs %>%
+  lcp_ind <- det_locs %>%
     arrange(id, dt) %>%
     group_by(id) %>%
     rename(x1 = x, y1 = y) %>%
     mutate(x2 = lead(x1, n = 1L),
            y2 = lead(y1, n = 1L)) %>%
     filter(!is.na(x2)) %>%
-    split(.$id) %>%
-    purrr::map(lc_path_ind, tl = tl)
+    ungroup() %>%
+    rowwise() %>%
+    mutate(geom = sf::st_as_sfc(
+      gdistance::shortestPath(tl,
+                              c(x1, y1),
+                              c(x2, y2),
+                              output = "SpatialLines"))) %>%
+    ungroup() %>%
+    mutate(n_pts = sapply(geom, length)/2)
 
-  class(paths) <- c("lcp_list", "list")
-
-  return(paths)
-}
-
-#' Remove length-0 lines from an \code{lcp_ind} object
-#'
-#' Takes an object of class \code{lcp_ind} and filters out any
-#' lines that do not have at least 2 vertices.
-#'
-#' @usage filter_line0(lcp_ind)
-#'
-#' @param lcp_ind An object of class \code{lcp_ind}.
-#'
-#' @return Returns an object of class \code{lcp_ind}.
-#'
-#' @details This function is intended for internal use on \code{lcp_list}
-#' objects.
-#'
-#' @export
-filter_line0 <- function(lcp_ind){
-  lcp_ind %>%
-    filter(n_pts > 1) %>%
-    return()
+  return(lcp_ind)
 }
 
 #' Plot an object of class \code{lcp_list}
