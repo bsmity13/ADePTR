@@ -88,7 +88,10 @@ str_paths <- function(det_locs){
       sf::st_linestring(c(
         sf::st_point(c(x1, y1)),
         sf::st_point(c(x2, y2))
-        ))))
+        )))) %>%
+    mutate(n_pts = 2)
+
+  class(paths) <- c("str_paths", class(paths))
 
   return(paths)
 }
@@ -101,10 +104,9 @@ str_paths <- function(det_locs){
 #' any number of individuals.
 #'
 #' @param det_locs A \code{data.frame} of georeferenced acoustic
-#' detections, subset for a single individual. Could be, \emph{e.g.},
-#' the \code{data.frame} returned by \code{\link{proc_dets}()} or the
-#' \code{data.frame} returned by \code{\link{coa_locs}()}, subset to a
-#' single individual.
+#' detections. Could be, \emph{e.g.}, the \code{data.frame} returned by
+#' \code{\link{proc_dets}()} or the \code{data.frame} returned by
+#' \code{\link{coa_locs}()}.
 #' @param conductance A \code{\link[raster:Raster-class]{RasterLayer}}
 #' object of conductance, either returned by \code{\link{raster_conduct}()}
 #' or a similar object created by the user.
@@ -152,7 +154,7 @@ lc_paths <- function(det_locs, conductance){
   #Apply geoCorrection
   tl <- geoCorrection(tl, type = "c", multpl = FALSE)
 
-  lcp_ind <- det_locs %>%
+  paths <- det_locs %>%
     arrange(id, dt) %>%
     group_by(id) %>%
     rename(x1 = x, y1 = y) %>%
@@ -161,25 +163,29 @@ lc_paths <- function(det_locs, conductance){
     filter(!is.na(x2)) %>%
     ungroup() %>%
     rowwise() %>%
-    mutate(geom = sf::st_as_sfc(
+    mutate(geometry = sf::st_as_sfc(
       gdistance::shortestPath(tl,
                               c(x1, y1),
                               c(x2, y2),
                               output = "SpatialLines"))) %>%
     ungroup() %>%
-    mutate(n_pts = sapply(geom, length)/2)
+    mutate(n_pts = sapply(geometry, length)/2)
 
-  return(lcp_ind)
+  class(paths) <- c("lc_paths", class(paths))
+
+  return(paths)
 }
 
-#' Plot an object of class \code{lcp_list}
+#' Plot an object of class \code{*_paths}
 #'
-#' Plots the least cost paths between locations for all individuals
-#' in an \code{lcp_list} object.
+#' Plots the paths between locations for all individuals
+#' in an \code{str_paths} or an \code{lc_paths} object.
 #'
-#' @usage plot_lc_path(...)
+#' @usage plot_paths(paths, path_palette = viridis::viridis, add = FALSE,
+#' set_par = !add, use_ggplot = FALSE)
 #'
-#' @param lcps An object of class \code{lcp_list}
+#' @param paths An object of class \code{*_paths}: either \code{str_paths}
+#' or \code{lc_paths}
 #' @param path_palette A function name that will generate a palette for each
 #' of the individuals tracked. Can be any function that will accept \code{n}
 #' as an argument.
@@ -187,9 +193,18 @@ lc_paths <- function(det_locs, conductance){
 #' existing plot? Defaults to \code{FALSE}. Not applicable if
 #' \code{use_ggplot = TRUE}. User could, \emph{e.g.}, use this option to
 #' add this plot on top of \code{\link{map_dets}()}.
+#' @param set_par \code{TRUE} or \code{FALSE}. Should the function change
+#' the graphical parameters or not? This should be \code{FALSE} if the
+#' user wishes to manually set the graphical parameters, \emph{e.g.}, so
+#' that they can still add to the plot manually after it is generated.
+#' Defaults to \code{!add}.
 #' @param use_ggplot \code{TRUE} or \code{FALSE}. Should the plot be
 #' made using \code{ggplot2}? Defaults to \code{FALSE} and uses base R
 #' plotting.
+#' @param stps An object of class \code{str_paths} to be passed from the
+#' generic \code{plot()} to \code{plot_paths()}
+#' @param lcps An object of class \code{lc_paths} to be passed from the
+#' generic \code{plot()} to \code{plot_paths()}
 #'
 #' @details Blah blah
 #'
@@ -211,10 +226,10 @@ lc_paths <- function(det_locs, conductance){
 #' conduct <- raster_conduct(sa_rast = r.cond, impassable = acoustic$land)
 #'
 #' #Create least-cost paths
-#' lcps <- lc_path(det_locs = coas.6h, conductance = conduct)
+#' lcps <- lc_paths(det_locs = coas.6h, conductance = conduct)
 #'
 #' #Plot
-#' plot_lc_path(lcps)
+#' plot_paths(lcps)
 #'
 #' #Plot on top of detections
 #'   #Note set_par = FALSE in both functions
@@ -227,37 +242,34 @@ lc_paths <- function(det_locs, conductance){
 #'   leg_pos = "topleft", sta_col = "blue", sta_bg = "orange",
 #'   set_par = FALSE)
 #'
-#' plot_lc_path(lcps, set_par = FALSE, add = TRUE)
+#' plot_paths(lcps, set_par = FALSE, add = TRUE)
 #'
 #' #Plot with ggplot
-#' plot_lc_path(lcps, use_ggplot = TRUE) +
+#' plot_paths(lcps, use_ggplot = TRUE) +
 #'   theme_bw() +
 #'   geom_sf(data = acoustic$land)
 
 
 #' @export
-plot_lc_path <- function(lcps, path_palette = viridis::viridis, add = FALSE, set_par = !add,
+plot_paths <- function(paths, path_palette = viridis::viridis, add = FALSE, set_par = !add,
                          use_ggplot = FALSE){
   #Check class
-  if(!("lcp_list" %in% class(lcps))){
-    stop("Object must be of class 'lcp_list'.\n  See ?lc_path for details.")
+  if(!(any(grepl("paths", class(paths))))){
+    stop("Object must be of class 'str_paths' or 'lc_paths'.
+           See ?str_paths or ?lc_paths for details.")
   }
 
   #Remove 0-length lines
-  lcps <- lcps %>%
-    purrr::map(filter_line0)
+  paths <- paths %>%
+    filter(n_pts > 1)
 
   #Process colors
-  path_cols <- do.call(path_palette, args = list(n = length(lcps)))
+  path_cols <- do.call(path_palette, args = list(n = length(unique(paths$id))))
 
   #Decide whether to use ggplot or base plotting
   if(use_ggplot){
     #ggplot Plotting
-    #Convert to data.frame
-    suppressWarnings(lcps_df <- bind_rows(lcps))
-    #Reformat geom as sf object
-    lcps_df$geometry <- sf::st_as_sfc(lcps_df$geom)
-    ggp <- ggplot2::ggplot(data = lcps_df) +
+    ggp <- ggplot2::ggplot(data = paths) +
       ggplot2::geom_sf(aes(color = id)) +
       scale_color_manual(values = path_cols)
     return(ggp)
@@ -270,58 +282,35 @@ plot_lc_path <- function(lcps, path_palette = viridis::viridis, add = FALSE, set
       par(mar = c(0.1, 0.1, 0.1, 0.1),
           cex = 0.8)
     }
-    #Loop through the lcps
-    for (i in 1:length(lcps)){
-      if (i == 1){
-        plot(lcps[[i]]$geom, col = path_cols[[i]], add = add)
-      } else {
-        plot(lcps[[i]]$geom, col = path_cols[[i]], add = TRUE)
-      }
-    }
+    #Setup palette for individuals
+    orig.pal <- palette() #Get previous palette
+    n.ind <- length(unique(paths$id))
+    palette(do.call(path_palette, args = list(n = n.ind))) #Change palette
+    #Plot the paths
+    plot(paths$geometry,
+         col = as.numeric(factor(paths$id)),
+         add = add)
+
     #Revert to original parameters
+    palette(orig.pal)
     if(set_par){
       on.exit(par(orig.par), add = TRUE)
     }
   }
 }
 
-#' Plot an object of class \code{lcp_list}
-#'
-#' Plots the least cost paths between locations for all individuals
-#' in an \code{lcp_list} object.
-#'
-#' @details See \code{\link{plot_lc_path}()} for details.
-#'
-#' @examples
-#'
-#' #Load sample data
-#' data(acoustic)
-#'
-#' #Process detections and stations
-#' proc.det <- proc_dets(det = acoustic$detections, sta = acoustic$stations)
-#'
-#' #Calculate  COAs -- Note, using 6 hour COAs to reduce processing time
-#' coas.6h <- coa_locs(proc.det, Delta_t = "6 hours")
-#'
-#' #Initialize raster
-#' r.cond <- init_raster(study_area = acoustic$study_area, res = 0.001)
-#'
-#' #Create conductance raster
-#' conduct <- raster_conduct(sa_rast = r.cond, impassable = acoustic$land)
-#'
-#' #Create least-cost paths
-#' lcps <- lc_path(det_locs = coas.6h, conductance = conduct)
-#'
-#' #Generic plot
-#' plot(lcps)
-#'
-#' #Generic method with land added
-#' plot(lcps, set_par = FALSE)
-#' plot(acoustic$land, add = TRUE, col = "wheat")
-#'
+#' Plot an object of class \code{str_paths}
+#' @describeIn plot_paths Plot \code{str_paths} objects
 #' @export
-plot.lcp_list <- function(lcps, ...){
-  plot_lc_path(lcps, ...)
+plot.str_paths <- function(stps, ...){
+  plot_paths(stps, ...)
+}
+
+#' Plot an object of class \code{lc_paths}
+#' @describeIn plot_paths Plot \code{lc_paths} objects
+#' @export
+plot.lc_paths <- function(lcps, ...){
+  plot_paths(lcps, ...)
 }
 
 #Location Interpolation----
