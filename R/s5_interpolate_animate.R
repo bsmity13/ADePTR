@@ -1,6 +1,8 @@
 #Step 5
 #Functions to interpolate locations and animate paths
 
+#Conductance Raster----
+
 #' Create a conductance raster
 #'
 #' Creates a conductance raster for the study area for use in calculating
@@ -56,7 +58,42 @@ raster_conduct <- function(sa_rast, impassable, impassable_value = 100){
   conduct <- 1/resist
 
   return(conduct)
+}
+
+#Linear paths----
+
+#' Connect successive locations with lines
+#'
+#' Creates straight path line objects between each location for
+#' any number of individuals.
+#'
+#' @export
+str_path <- function(det_locs){
+
+  #Make sure "id" is in the data.frame of det_locs
+  if(!("id" %in% names(det_locs))){
+    stop("There must be a column named 'id' that identifies individuals.
+           See ?proc_dets for proper formatting.")
   }
+
+  paths <- det_locs %>%
+    arrange(id, dt) %>%
+    group_by(id) %>%
+    rename(x1 = x, y1 = y) %>%
+    mutate(x2 = lead(x1, n = 1L),
+           y2 = lead(y1, n = 1L)) %>%
+    filter(!is.na(x2)) %>%
+    rowwise() %>%
+    mutate(geometry = sf::st_geometry(
+      sf::st_linestring(c(
+        sf::st_point(c(x1, y1)),
+        sf::st_point(c(x2, y2))
+        ))))
+
+  return(paths)
+}
+
+#Least Cost Paths----
 
 #' Create least cost paths between each location
 #'
@@ -353,6 +390,10 @@ plot_lc_path <- function(lcps, path_palette = viridis::viridis, add = FALSE, set
 plot.lcp_list <- function(lcps, ...){
   plot_lc_path(lcps, ...)
 }
+
+#Location Interpolation----
+
+
 
 
 
