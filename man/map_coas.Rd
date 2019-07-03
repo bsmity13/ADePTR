@@ -4,8 +4,8 @@
 \alias{map_coas}
 \title{Map Centers of Activity}
 \usage{
-map_coas(proc_det, coas, coa.crs = 4326, coa.palette = viridis::viridis,
-coa.leg.pos = "bottomleft", det.leg.pos = NA, set.par = TRUE, ...)
+map_coas(proc_det, coas, coa_crs = 4326, coa_palette = viridis::viridis,
+coa_leg_pos = "bottomleft", det_leg_pos = NA, set_par = TRUE, ...)
 }
 \arguments{
 \item{proc_det}{The \code{data.frame} of processed detections used by
@@ -14,27 +14,27 @@ coa.leg.pos = "bottomleft", det.leg.pos = NA, set.par = TRUE, ...)
 \item{coas}{The \code{data.frame} of centers of activiy (COAs) created
 by \code{\link{coa_locs}()}.}
 
-\item{coa.crs}{A coordinate reference system to use for the COA
+\item{coa_crs}{A coordinate reference system to use for the COA
 locations. Used by \code{\link[sf]{st_sf}} as the \code{crs} argument.
 Defaults to integer 4326, indicating EPSG code 4326 for WGS 84 lat/long.}
 
-\item{coa.palette}{A function name that will generate a palette for each
+\item{coa_palette}{A function name that will generate a palette for each
 of the individuals tracked. Can be any function that will accept \code{n}
 as an argument.}
 
-\item{coa.leg.pos}{Indicates where the COA legend should be (showing
+\item{coa_leg_pos}{Indicates where the COA legend should be (showing
 the symbol for each individual animal). Can be any \code{x}
 that the base \code{graphics} function \code{\link[graphics]{legend}}
 will accept. Defaults to the text string \code{"bottomleft"}.}
 
-\item{det.leg.pos}{Indicates where the default legend for the \emph{
+\item{det_leg_pos}{Indicates where the default legend for the \emph{
 station detections} should be. Passed to \code{\link{map_dets}()} to
 control that legend placement. Can be any \code{x} that the base
 \code{graphics} function \code{\link[graphics]{legend}} will accept.
 Defaults to \code{NA} which prevents that legend from being drawn. Can
-be changed to a location \code{!= coa.leg.pos}.}
+be changed to a location \code{!= coa_leg_pos}.}
 
-\item{set.par}{\code{TRUE} or \code{FALSE}. Should the function change
+\item{set_par}{\code{TRUE} or \code{FALSE}. Should the function change
 the graphical parameters or not? This should be \code{FALSE} if the
 user wishes to manually set the graphical parameters, \emph{e.g.}, so
 that they can still add to the plot manually after it is generated.}

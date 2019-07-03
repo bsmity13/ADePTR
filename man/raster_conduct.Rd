@@ -38,10 +38,10 @@ locations.
 data(acoustic)
 
 #Initialize raster
-r.sa <- init_raster(study_area = acoustic$study_area)
+r.cond <- init_raster(study_area = acoustic$study_area, res = 0.001)
 
 #Create conductance raster
-conduct <- raster_conduct(sa_rast = r.sa, impassable = acoustic$land)
+conduct <- raster_conduct(sa_rast = r.cond, impassable = acoustic$land)
 
 #Plot
 plot(conductance)
