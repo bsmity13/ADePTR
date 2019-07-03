@@ -152,7 +152,7 @@ lc_paths <- function(det_locs, conductance){
                               transitionFunction = mean,
                               directions = 8)
   #Apply geoCorrection
-  tl <- geoCorrection(tl, type = "c", multpl = FALSE)
+  tl <- gdistance::geoCorrection(tl, type = "c", multpl = FALSE)
 
   paths <- det_locs %>%
     arrange(id, dt) %>%
@@ -315,7 +315,98 @@ plot.lc_paths <- function(lcps, ...){
 
 #Location Interpolation----
 
+#' Generate regular points along a path
+#'
+#' Takes a *_paths object and generates regularly-spaced
+#' points along the path.
+#'
+#' @usage regular_points(paths, Delta_t)
+#'
+#' @param paths An object of class \code{*_paths}: either \code{str_paths}
+#' or \code{lc_paths}
+#' @param Delta_t The timestep to use for interpolation. The number of
+#' interpolated points will be approximately (total time)/Delta_t. See
+#' details below.
+#'
+#' @details This function returns points that are regularly placed in
+#' \emph{space}, even though the user provides a \emph{time} argument
+#' (\code{Delta_t}). When the input locations are regularly spaced in time,
+#' the output locations will be regularly spaced in both
+#' \emph{space and time}. This will already be the case if the user has
+#' decided to use COAs to represent the locations.
+#'
+#' The number of points returned is reported in the output \code{data.frame}
+#' in the column \code{$n_interp}. We determine this number by counting the
+#' length of the sequence from the start time to the end time of the
+#' track for each individual, with the \code{by} argument being
+#' \code{Delta_t}. \emph{I.e.}:
+#'
+#' \code{
+#' n_interp = length(
+#'              seq(from = min(dt),
+#'              to = max(dt),
+#'              by = Delta_t))}
+#'
+#' Therefore, \code{Delta_t} can be any value that can be accepted by
+#' the \code{by} argument of \code{\link{seq.POSIXt}()}.
+#'
+#' @export
+regular_points <- function(paths, Delta_t){
+  #Check class
+  if(!(any(grepl("paths", class(paths))))){
+    stop("Object must be of class 'str_paths' or 'lc_paths'.
+           See ?str_paths or ?lc_paths for details.")
+  }
 
+  #Need to convert from lat/long to UTM
+  if(grepl("longlat", sf::st_crs(paths$geometry)$proj4string)){
+    warning(paste("Function must convert from a geographic coordinate",
+                  "system to a projected coordinate system. This is safest",
+                  "if the original CRS was EPSG:4326, i.e., st_crs(4326)."))
+    #Store original CRS
+    orig_crs <- st_crs(paths$geometry)
+    #Get UTM zone
+    mean_coords <- paths %>%
+      summarize(x = mean(x1, na.rm = TRUE),
+                y = mean(y1, na.rm = TRUE))
+    z <- zone_from_ll(lon = mean_coords[["x"]],
+                 lat = mean_coords[["y"]])
+    utm_crs <- as.integer(paste0(326, z))
+    #Transform
+    paths$geometry <- sf::st_transform(paths$geometry, crs = utm_crs)
+  }
+
+  #Store projected CRS
+  proj_crs <- sf::st_crs(paths$geometry)
+
+  #Interpolate along the path
+  res <- paths %>%
+    filter(n_pts > 1) %>%
+    group_by(id) %>%
+    summarize(start_dt = min(dt, na.rm = TRUE),
+              end_dt = max(dt, na.rm = TRUE),
+              lines = sf::st_combine(geometry)) %>%
+    rowwise() %>%
+    mutate(n_interp = length(
+      seq(from = start_dt,
+          to = end_dt,
+          by = Delta_t))) %>%
+    mutate(pts = sf::st_combine(
+      sf::st_sample(lines,
+                    size = n_interp,
+                    type = "regular"))) %>%
+    dplyr::select(id, start_dt, end_dt, n_interp, pts)
+
+  #Set CRS for pts to the projected CRS
+  sf::st_crs(res$pts) <- proj_crs
+
+  #Convert to orginal CRS
+  if(sf::st_crs(res$pts) != orig_crs){
+    res$pts <- sf::st_transform(res$pts, orig_crs)
+  }
+
+  return(res)
+}
 
 
 
