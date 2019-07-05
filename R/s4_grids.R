@@ -353,7 +353,7 @@ raster_overlap <- function(..., background = NA){
   rs <- list(...)
 
   #Check that all inputs are rasters
-  r_check <- unlist(lapply(rs, function(x){class(x)=="RasterLayer"}))
+  r_check <- unlist(lapply(rs, function(x){inherits(x, "RasterLayer")}))
   if(any(!r_check)){
     stop("All inputs must be of class 'RasterLayer'.")
   }
