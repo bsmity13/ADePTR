@@ -5,23 +5,25 @@
 \alias{is.dets}
 \title{Combine detections with stations}
 \usage{
-proc_dets(det, sta, ...)
+proc_dets(det, sta, crs = 4326)
 
 is.dets(x)
 }
 \arguments{
 \item{det}{A \code{data.frame} of detections. Format should match the
-object \strong{detections} from \link{acoustic} (`id`, `dt`, `rec_id`).}
+object \code{detections} from \link{acoustic} (\code{id}, \code{dt},
+code{rec_id}).}
 
 \item{sta}{A \code{data.frame} of the stations where receivers were
 located for a period of time. Format should match the object
-\strong{stations} from \link{acoustic} (`sta_id`, `rec_id`, `dt_dep`,
-`dt_ret`, `x`, `y`).}
+\code{stations} from \link{acoustic} (\code{sta_id}, \code{rec_id},
+\code{dt_dep}, \code{dt_ret}, \code{x}, \code{y}).}
 
 \item{crs}{Coordinate Reference System to use for the detections. Passed
-to \code{\link[sf:st_crs]{sf::st_crs}()} to set CRS for sf object.}
+to \code{\link[sf:st_crs]{sf::st_crs}()} to set CRS for sf object.
+Defaults to \code{4326}, longitude/latitude on the WGS84 spheroid.}
 
-\item{...}{Additional arguments (not currently implemented)}
+\item{x}{An object to check if it inherits class \code{dets}.}
 }
 \value{
 Returns a \code{data.frame} of class \code{dets} of
@@ -31,8 +33,6 @@ contains column \code{geometry}.
 \description{
 This function combines detections with stations to place detections
 in space.
-
-Convenience function that checks is object is of class \code{dets}.
 }
 \details{
 Uses \code{\link[sqldf]{sqldf}} to combine \code{det} with
@@ -41,11 +41,12 @@ within the date-time of the station deployment.
 
 It specifically excutes the following SQL \code{SELECT} query:
 
-\code{SELECT id, sta.rec_id, sta_id, dt, lon, lat} \cr
-\code{FROM det LEFT JOIN sta}\cr
-\code{ON det.rec_id = sta.rec_id}\cr
-\code{AND det.dt > sta.dt_dep}\cr
-\code{AND det.dt < sta.dt_ret}
+\preformatted{
+ SELECT id, sta.rec_id, sta_id, dt, lon, lat
+ FROM det LEFT JOIN sta
+ ON det.rec_id = sta.rec_id
+     AND det.dt > sta.dt_dep
+     AND det.dt < sta.dt_ret}
 
 The left join keeps all rows from the detections
 \code{data.frame}, inserting an \code{NA} if there is a
@@ -55,7 +56,7 @@ with \code{NA} in the x- or y-coordinate with a warning.
 }
 \section{Functions}{
 \itemize{
-\item \code{is.dets}: 
+\item \code{is.dets}: Checks whether an object is of class \code{dets}.
 }}
 
 \examples{
