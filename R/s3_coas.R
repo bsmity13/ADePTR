@@ -61,6 +61,15 @@ harmonic_mean <- function(x){
 #' @export
 coa_locs <- function(proc_det, Delta_t = "1 hour", mean_type = c("arithmetic", "harmonic"), ...){
 
+  #Check class
+  if(!is.dets(proc_det)){
+    stop("\n  Object proc_det must be of class 'dets'.
+  See ?proc_dets for conversion.")
+  }
+
+  #Drop spatial information
+  proc_det <- sf::st_drop_geometry(proc_det)
+
   #Check that mean_type is one of the possible values
   if(!(mean_type[1] %in% c("arithmetic", "harmonic"))){
     stop("'mean_type' must be either 'arithmetic' or 'harmonic'")

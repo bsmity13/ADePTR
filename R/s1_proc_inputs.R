@@ -63,6 +63,8 @@ zone_from_ll <- function(lon, lat){
 #' located for a period of time. Format should match the object
 #' \strong{stations} from \link{acoustic} (`sta_id`, `rec_id`, `dt_dep`,
 #' `dt_ret`, `x`, `y`).
+#' @param crs Coordinate Reference System to use for the detections. Passed
+#' to \code{\link[sf:st_crs]{sf::st_crs}()} to set CRS for sf object.
 #' @param ... Additional arguments (not currently implemented)
 #'
 #' @details Uses \code{\link[sqldf]{sqldf}} to combine \code{det} with
@@ -84,7 +86,8 @@ zone_from_ll <- function(lon, lat){
 #' with \code{NA} in the x- or y-coordinate with a warning.
 #'
 #' @return Returns a \code{data.frame} of class \code{dets} of
-#' georeferenced detections.
+#' georeferenced detections. Object is also of class \code{sf} and
+#' contains column \code{geometry}.
 #'
 #' @seealso \link{acoustic} for details on the formatting of the
 #' \code{data.frame}s \code{det} and \code{sta}
@@ -97,7 +100,7 @@ zone_from_ll <- function(lon, lat){
 #' proc.det <- proc_dets(det = acoustic$detections, sta = acoustic$stations)
 #'
 #' @export
-proc_dets <- function(det, sta){
+proc_dets <- function(det, sta, crs = 4326){
   #Check that the dt_* columns are formatted
   if((!lubridate::is.POSIXct(sta$dt_dep) | !lubridate::is.POSIXct(sta$dt_ret))){
     stop("The dt columns of 'sta' should be formatted as POSIXct.")
@@ -105,6 +108,8 @@ proc_dets <- function(det, sta){
   if(!lubridate::is.POSIXct(det$dt)){
     stop("The dt column of 'det' should be formatted as POSIXct.")
   }
+
+  cat("\nJoining data... ")
   #Use SQL join to join 'det' and 'sta'
   res <- sqldf::sqldf("SELECT id, sta.rec_id, sta_id,
                         dt, x, y
@@ -113,6 +118,7 @@ proc_dets <- function(det, sta){
                           AND det.dt > sta.dt_dep
                           AND det.dt < sta.dt_ret",
                       drv = "SQLite")
+  cat("Done.\n")
   #Remove any detections that were not assigned to a location
   rem <- which(is.na(res$x) | is.na(res$y))
   if (length(rem) > 0) {
@@ -124,8 +130,14 @@ proc_dets <- function(det, sta){
     res <- res[-rem,]
   }
 
+  #Create spatial object
+  cat("\nCreating spatial geometry... ")
+  res <- res %>%
+    sf::st_as_sf(agr = "identity", coords = c("x", "y"), crs = crs, remove = FALSE)
+  cat("Done.\n")
+
   #Set the S3 class
-  class(res) <- c("dets", "data.frame")
+  class(res) <- c("dets", class(res))
 
   #Return
   return(res)
@@ -134,6 +146,9 @@ proc_dets <- function(det, sta){
 #' Check if object is of class \code{dets}.
 #'
 #' Convenience function that checks is object is of class \code{dets}.
+#'
+#' @describeIn proc_dets
+#'
 #' @export
 is.dets <- function(x) {
   inherits(x, "dets")
@@ -234,15 +249,13 @@ plot_sta_history <- function(proc_det, set_par=TRUE, use_ggplot = FALSE, ...) {
 #' \code{\link{proc_dets}()} and plots a map showing the relative number
 #' of detections per station.
 #'
-#' @usage map_dets(proc_det, sta_crs = 4326, base_layers = NULL,
+#' @usage map_dets(proc_det, base_layers = NULL,
 #'              base_borders = NULL, base_cols = NULL,
 #'              sta_col = "black", sta_bg = "red",
 #'              leg_pos = "bottomleft", set_par = TRUE, ...)
 #'
 #' @param proc_det A \code{data.frame} of class \code{dets} as returned
 #' by the function \code{\link{proc_dets}()}.
-#' @param sta_crs A coordinate reference system to use for the station
-#' locations. Used by \code{\link[sf]{st_sf}} as the \code{crs} argument.
 #' Defaults to integer 4326, indicating EPSG code 4326 for WGS 84 lat/long.
 #' @param base_layers A \code{list} of georeferenced vectors to be plotted
 #' as the basemap under the stations. Designed to be \code{\link[sf]{sfc}}
@@ -299,14 +312,14 @@ plot_sta_history <- function(proc_det, set_par=TRUE, use_ggplot = FALSE, ...) {
 #' map_dets(proc.det)
 #'
 #' #Map detections with custom settings
-#' map_dets(proc_det = proc.det, sta_crs = 4326,
+#' map_dets(proc_det = proc.det,
 #'     base_layers = list(acoustic$study_area, acoustic$land),
 #'     base_cols = list("gray30", "wheat"), base_borders = list(NA, "seagreen"),
 #'     xlim=c(-64.628, -64.612), ylim=c(17.770, 17.795),
 #'     leg_pos = "topleft", sta_col = "blue", sta_bg = "orange")
 #'
 #' @export
-map_dets <- function(proc_det, sta_crs = 4326, base_layers = NULL,
+map_dets <- function(proc_det, base_layers = NULL,
                      base_borders = NULL, base_cols = NULL,
                      sta_col = "black", sta_bg = "red",
                      leg_pos = "bottomleft",
@@ -321,17 +334,10 @@ map_dets <- function(proc_det, sta_crs = 4326, base_layers = NULL,
   ##Data pre-processing
   #Aggregate station detections
   stas <- proc_det %>%
-    group_by(sta_id) %>%
+    group_by(sta_id, x, y) %>%
     summarize(n_det = n()) %>%
-    left_join(unique(proc_det[,c("sta_id", "x", "y")]), by = "sta_id") %>%
+    ungroup() %>%
     mutate(sz = cut(n_det, breaks=pretty(n_det), labels=paste0("<", pretty(n_det)[-1])))
-
-  #Create an sf object
-  sta.sp <- sf::st_sf(id = stas$sta_id,
-                      sz = stas$sz,
-                      geometry = sf::st_geometry(
-                        sf::st_as_sf(stas, coords = c("x", "y"),
-                                     dim = "XY", crs = sta_crs)))
 
   #Find xlim and ylim by checking extent of all layers
   #Combine all layers in a list
@@ -340,7 +346,7 @@ map_dets <- function(proc_det, sta_crs = 4326, base_layers = NULL,
   } else {
     all.layers <- base_layers
   }
-  all.layers[[length(base_layers)+1]] <- sta.sp
+  all.layers[[length(base_layers)+1]] <- stas
 
   if(!is.null(base_layers)){
     #First check that the color lists are the right lengths
@@ -370,18 +376,18 @@ map_dets <- function(proc_det, sta_crs = 4326, base_layers = NULL,
 
   if (is.null(xlim)){  #If xlim is not specified, pull from layers
     #xmin
-    xmin <- min(unlist(lapply(all.layers, function(x) st_bbox(x)["xmin"])))
+    xmin <- min(unlist(lapply(all.layers, function(x) sf::st_bbox(x)["xmin"])))
     #xmax
-    xmax <- max(unlist(lapply(all.layers, function(x) st_bbox(x)["xmax"])))
+    xmax <- max(unlist(lapply(all.layers, function(x) sf::st_bbox(x)["xmax"])))
     #Combine
     xlim <- c(xmin, xmax)
   }
 
   if (is.null(ylim)){  #If ylim is not specified, pull from layers
     #ymin
-    ymin <- min(unlist(lapply(all.layers, function(x) st_bbox(x)["ymin"])))
+    ymin <- min(unlist(lapply(all.layers, function(x) sf::st_bbox(x)["ymin"])))
     #ymax
-    ymax <- max(unlist(lapply(all.layers, function(x) st_bbox(x)["ymax"])))
+    ymax <- max(unlist(lapply(all.layers, function(x) sf::st_bbox(x)["ymax"])))
     #Combine
     ylim <- c(ymin, ymax)
   }
@@ -392,7 +398,7 @@ map_dets <- function(proc_det, sta_crs = 4326, base_layers = NULL,
 
     #Start the plot with the station data
     p <- ggplot() +
-      geom_sf(data = sta.sp, aes(size = sz),
+      geom_sf(data = stas, aes(size = sz),
               pch = 21, color = sta_col, fill = sta_bg,
               show.legend = "point")
 
@@ -419,8 +425,7 @@ map_dets <- function(proc_det, sta_crs = 4326, base_layers = NULL,
     #Now change theme, limits, etc.
     p <- p +
       ggspatial::annotation_scale(location = "bl", width_hint = 0.5) +
-      coord_sf(crs = st_crs(sta_crs),
-               xlim = xlim, ylim = ylim, expand = FALSE) +
+      coord_sf(xlim = xlim, ylim = ylim, expand = FALSE) +
       labs(size = "Detections") +
       theme_bw() +
       theme(axis.title.x = element_blank(),
@@ -483,7 +488,7 @@ map_dets <- function(proc_det, sta_crs = 4326, base_layers = NULL,
     } #End of basemap plotting
 
     #Plot stations
-    plot(sta.sp$geometry, add = TRUE,
+    plot(stas$geometry, add = TRUE,
          pch = 21, col = sta_col, bg = sta_bg,
          cex = as.numeric(stas$sz)/2)
     #Plot legend

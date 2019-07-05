@@ -4,17 +4,14 @@
 \alias{map_dets}
 \title{Plots a map of station locations}
 \usage{
-map_dets(proc_det, sta_crs = 4326, base_layers = NULL,
+map_dets(proc_det, base_layers = NULL,
              base_borders = NULL, base_cols = NULL,
              sta_col = "black", sta_bg = "red",
              leg_pos = "bottomleft", set_par = TRUE, ...)
 }
 \arguments{
 \item{proc_det}{A \code{data.frame} of class \code{dets} as returned
-by the function \code{\link{proc_dets}()}.}
-
-\item{sta_crs}{A coordinate reference system to use for the station
-locations. Used by \code{\link[sf]{st_sf}} as the \code{crs} argument.
+by the function \code{\link{proc_dets}()}.
 Defaults to integer 4326, indicating EPSG code 4326 for WGS 84 lat/long.}
 
 \item{base_layers}{A \code{list} of georeferenced vectors to be plotted
@@ -84,7 +81,7 @@ proc.det <- proc_dets(det = acoustic$detections, sta = acoustic$stations)
 map_dets(proc.det)
 
 #Map detections with custom settings
-map_dets(proc_det = proc.det, sta_crs = 4326,
+map_dets(proc_det = proc.det,
     base_layers = list(acoustic$study_area, acoustic$land),
     base_cols = list("gray30", "wheat"), base_borders = list(NA, "seagreen"),
     xlim=c(-64.628, -64.612), ylim=c(17.770, 17.795),

@@ -2,9 +2,12 @@
 % Please edit documentation in R/s1_proc_inputs.R
 \name{proc_dets}
 \alias{proc_dets}
+\alias{is.dets}
 \title{Combine detections with stations}
 \usage{
 proc_dets(det, sta, ...)
+
+is.dets(x)
 }
 \arguments{
 \item{det}{A \code{data.frame} of detections. Format should match the
@@ -15,15 +18,21 @@ located for a period of time. Format should match the object
 \strong{stations} from \link{acoustic} (`sta_id`, `rec_id`, `dt_dep`,
 `dt_ret`, `x`, `y`).}
 
+\item{crs}{Coordinate Reference System to use for the detections. Passed
+to \code{\link[sf:st_crs]{sf::st_crs}()} to set CRS for sf object.}
+
 \item{...}{Additional arguments (not currently implemented)}
 }
 \value{
 Returns a \code{data.frame} of class \code{dets} of
-georeferenced detections.
+georeferenced detections. Object is also of class \code{sf} and
+contains column \code{geometry}.
 }
 \description{
 This function combines detections with stations to place detections
 in space.
+
+Convenience function that checks is object is of class \code{dets}.
 }
 \details{
 Uses \code{\link[sqldf]{sqldf}} to combine \code{det} with
@@ -44,6 +53,11 @@ detection not within one of the time intervals for a given
 receiver. The function subsequently removes any locations
 with \code{NA} in the x- or y-coordinate with a warning.
 }
+\section{Functions}{
+\itemize{
+\item \code{is.dets}: 
+}}
+
 \examples{
 #Load the example data set
 data(acoustic)
