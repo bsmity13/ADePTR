@@ -89,7 +89,8 @@ str_paths <- function(det_locs){
         sf::st_point(c(x1, y1)),
         sf::st_point(c(x2, y2))
         )))) %>%
-    mutate(n_pts = 2)
+    mutate(n_pts = 2) %>%
+    ungroup()
 
   class(paths) <- c("str_paths", class(paths))
 
