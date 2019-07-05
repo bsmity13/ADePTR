@@ -176,6 +176,15 @@ lc_paths <- function(det_locs, conductance){
   return(paths)
 }
 
+#' Check if object is of class \code{*_paths}.
+#'
+#' Convenience function that checks is object is of class \code{*_paths}.
+#' Currently must be either \code{str_paths} or \code{lc_paths}.
+#' @export
+is.paths <- function(x) {
+  return(inherits(x, "str_paths") | inherits(x, "lc_paths"))
+}
+
 #' Plot an object of class \code{*_paths}
 #'
 #' Plots the paths between locations for all individuals
@@ -254,7 +263,7 @@ lc_paths <- function(det_locs, conductance){
 plot_paths <- function(paths, path_palette = viridis::viridis, add = FALSE, set_par = !add,
                          use_ggplot = FALSE){
   #Check class
-  if(!(any(grepl("paths", class(paths))))){
+  if(!is.paths(paths)){
     stop("Object must be of class 'str_paths' or 'lc_paths'.
            See ?str_paths or ?lc_paths for details.")
   }
@@ -357,7 +366,7 @@ plot.lc_paths <- function(lcps, ...){
 #' @export
 regular_points <- function(paths, Delta_t){
   #Check class
-  if(!(any(grepl("paths", class(paths))))){
+  if(!is.paths(paths)){
     stop("Object must be of class 'str_paths' or 'lc_paths'.
            See ?str_paths or ?lc_paths for details.")
   }
@@ -485,7 +494,7 @@ regular_points <- function(paths, Delta_t){
 animate_points <- function(reg_points,
                            ani.width = 800, ani.height = 600, ...){
   #Check class
-  if(!("reg_points" %in% class(reg_points))){
+  if(!inherits(reg_points, "reg_points")){
     stop("Object must be of class 'reg_points'.
            See ?regular_points for details.")
   }
