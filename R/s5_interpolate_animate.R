@@ -364,7 +364,7 @@ regular_points <- function(paths, Delta_t){
                   "system to a projected coordinate system. This is safest",
                   "if the original CRS was EPSG:4326, i.e., st_crs(4326)."))
     #Store original CRS
-    orig_crs <- st_crs(paths$geometry)
+    orig_crs <- sf::st_crs(paths$geometry)
     #Get UTM zone
     mean_coords <- paths %>%
       summarize(x = mean(x1, na.rm = TRUE),
@@ -380,7 +380,7 @@ regular_points <- function(paths, Delta_t){
   proj_crs <- sf::st_crs(paths$geometry)
 
   #Interpolate along the path
-  res <- paths %>%
+  path_summ <- paths %>%
     filter(n_pts > 1) %>%
     group_by(id) %>%
     summarize(start_dt = min(dt, na.rm = TRUE),
@@ -390,19 +390,45 @@ regular_points <- function(paths, Delta_t){
     mutate(n_interp = length(
       seq(from = start_dt,
           to = end_dt,
-          by = Delta_t))) %>%
+          by = Delta_t)))
+
+  res <- path_summ %>%
     mutate(pts = sf::st_combine(
       sf::st_sample(lines,
                     size = n_interp,
                     type = "regular"))) %>%
-    dplyr::select(id, start_dt, end_dt, n_interp, pts)
+    dplyr::select(id, start_dt, end_dt, n_interp, geometry = pts) %>%
+    ungroup()
 
-  #Set CRS for pts to the projected CRS
-  sf::st_crs(res$pts) <- proj_crs
+  #Now convert from wide (MULTIPOINT) to long (POINT) data
+  res <- sf::st_sf(res)
+  res <- sf::st_cast(x = res, to = "POINT", warn = FALSE)
+
+  #Add vector of datetimes to res
+  res$dt <- do.call("c", lapply(path_summ$id, function(x){
+    sdt <- path_summ %>%
+      dplyr::filter(id == x) %>%
+      dplyr::pull(start_dt)
+    edt <- path_summ %>%
+      dplyr::filter(id == x) %>%
+      dplyr::pull(end_dt)
+    npt <- path_summ %>%
+      dplyr::filter(id == x) %>%
+      dplyr::pull(n_interp)
+    dt_seq <- seq(from = sdt, to = edt, length.out = npt)
+    return(dt_seq)
+  }))
+
+  #Select columns of interest
+  res <- res %>%
+    dplyr::select(id, dt, geometry)
+
+  #Set CRS to the projected CRS
+  sf::st_crs(res) <- proj_crs
 
   #Convert to orginal CRS
-  if(sf::st_crs(res$pts) != orig_crs){
-    res$pts <- sf::st_transform(res$pts, orig_crs)
+  if(sf::st_crs(res) != orig_crs){
+    res <- sf::st_transform(res, orig_crs)
   }
 
   return(res)
