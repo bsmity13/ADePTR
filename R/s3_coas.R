@@ -120,6 +120,14 @@ coa_locs <- function(proc_det, Delta_t = "1 hour", mean_type = c("arithmetic", "
   return(coas)
 }
 
+#' Check if object is of class \code{coa}.
+#'
+#' Convenience function that checks is object is of class \code{coa}.
+#' @export
+is.coa <- function(x) {
+  return(inherits(x, "coa"))
+}
+
 #' Map Centers of Activity
 #'
 #' Plots a map using \code{\link{map_dets}()} and adds the
@@ -165,6 +173,11 @@ coa_locs <- function(proc_det, Delta_t = "1 hour", mean_type = c("arithmetic", "
 map_coas <- function(proc_det, coas, coa_crs = 4326, coa_palette = viridis::viridis,
                      coa_leg_pos = "bottomleft", det_leg_pos = NA,
                      set_par = TRUE, ...){
+
+  #Check class of coas
+  if(!is.coa(coas)){
+    stop("Object 'coas' must be of class 'coa'. See ?coa_locs.")
+  }
 
   #Store original parameters
   orig.par <- par(no.readonly = TRUE)
@@ -240,7 +253,7 @@ map_coas <- function(proc_det, coas, coa_crs = 4326, coa_palette = viridis::viri
 #' @export
 plot.coa <- function(coas, proc_det, ...){
   #Check class before proceeding
-  if(!("coa" %in% class(coas))){
+  if(!is.coa(coas)){
     stop("Object must be of class 'coa'. See ?coa_locs.")
   } else {
     #Make sure proc_det was passed
