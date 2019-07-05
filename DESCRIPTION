@@ -19,7 +19,8 @@ Imports:
     viridis (>= 0.5.1),
     gdistance (>= 1.1-1),
     ggplot2(>= 3.1.0),
-    ggspatial(>= 1.0.3)
+    ggspatial(>= 1.0.3),
+    gganimate(>= 1.0.3)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

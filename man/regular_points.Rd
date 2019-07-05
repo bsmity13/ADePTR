@@ -14,6 +14,10 @@ or \code{lc_paths}}
 interpolated points will be approximately (total time)/Delta_t. See
 details below.}
 }
+\value{
+Returns an object with S3 Class \code{reg_points}. Object is also
+of class \code{sf}, \code{tbl_df}, \code{tbl}, and \code{data.frame}.
+}
 \description{
 Takes a *_paths object and generates regularly-spaced
 points along the path.
@@ -32,11 +36,12 @@ length of the sequence from the start time to the end time of the
 track for each individual, with the \code{by} argument being
 \code{Delta_t}. \emph{I.e.}:
 
-\code{
-n_interp = length(
-             seq(from = min(dt),
-             to = max(dt),
-             by = Delta_t))}
+\preformatted{
+  n_interp = length(
+               seq(
+                 from = min(dt),
+                 to = max(dt),
+                 by = Delta_t))}
 
 Therefore, \code{Delta_t} can be any value that can be accepted by
 the \code{by} argument of \code{\link{seq.POSIXt}()}.

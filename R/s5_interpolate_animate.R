@@ -328,6 +328,9 @@ plot.lc_paths <- function(lcps, ...){
 #' interpolated points will be approximately (total time)/Delta_t. See
 #' details below.
 #'
+#' @return Returns an object with S3 Class \code{reg_points}. Object is also
+#' of class \code{sf}, \code{tbl_df}, \code{tbl}, and \code{data.frame}.
+#'
 #' @details This function returns points that are regularly placed in
 #' \emph{space}, even though the user provides a \emph{time} argument
 #' (\code{Delta_t}). When the input locations are regularly spaced in time,
@@ -341,11 +344,12 @@ plot.lc_paths <- function(lcps, ...){
 #' track for each individual, with the \code{by} argument being
 #' \code{Delta_t}. \emph{I.e.}:
 #'
-#' \code{
-#' n_interp = length(
-#'              seq(from = min(dt),
-#'              to = max(dt),
-#'              by = Delta_t))}
+#' \preformatted{
+#'   n_interp = length(
+#'                seq(
+#'                  from = min(dt),
+#'                  to = max(dt),
+#'                  by = Delta_t))}
 #'
 #' Therefore, \code{Delta_t} can be any value that can be accepted by
 #' the \code{by} argument of \code{\link{seq.POSIXt}()}.
@@ -431,9 +435,74 @@ regular_points <- function(paths, Delta_t){
     res <- sf::st_transform(res, orig_crs)
   }
 
+  #Assign S3 Class
+  class(res) <- c("reg_points", class(res))
+
   return(res)
 }
 
+#' Simple animation of regular points
+#'
+#' Provides a simple animation of a \code{reg_points} object.
+#'
+#' @usage animate_points(reg_points, ani.width = 800, ani.height = 600,
+#' ...)
+#'
+#' @param reg_points An object of class \code{reg_points} to create
+#' the animation.
+#' @param ani.width Width of the animation in pixels. Passed to
+#' \code{\link[animation:ani.options]{animation::ani.options}()}.
+#' @param ani.height Height of the animation in pixels. Passed to
+#' \code{\link[animation:ani.options]{animation::ani.options}()}.
+#'
+#' @return Returns an object of class \code{gganim} from package
+#' \link[gganimate:gganimate-package]{gganimate}.
+#'
+#' @details This function quickly creates a simple animation of a
+#' \code{reg_points} object returned by \code{\link{regular_points}()}.
+#' It uses the package \link[gganimate:gganimate-package]{gganimate}
+#' to make an animation. The function returns an object of class
+#' \code{gganim}, so the user can manipulate the object prior to printing
+#' just as they would manipulate any ggplot with \code{`+`}. Printing the
+#' object automatically renders the animation using
+#' \code{\link[gganimate]{animate}}.
+#'
+#' We encourage the user to explore
+#' \link[gganimate:gganimate-package]{gganimate} for producing their own
+#' custom animations from the interpolated regular points returned by
+#' \code{\link{regular_points}()}. The source code from this function
+#' could serve as a starting point.
+#'
+#' \preformatted{
+#'     ani <- ggplot(reg_points) +
+#'       geom_sf(aes(color = id), key_glyph = "point") +
+#'       theme_bw() +
+#'       transition_time(time = dt) +
+#'       labs(title = 'Time: {frame_time}', color = "ID")
+#' }
+#'
+#' @export
+animate_points <- function(reg_points,
+                           ani.width = 800, ani.height = 600, ...){
+  #Check class
+  if(!("reg_points" %in% class(reg_points))){
+    stop("Object must be of class 'reg_points'.
+           See ?regular_points for details.")
+  }
+
+  #Set animation options
+  animation::ani.options(ani.width = ani.width, ani.height = ani.height)
+
+  #Define animation
+  ani <- ggplot(reg_points) +
+    geom_sf(aes(color = id), key_glyph = "point") +
+    theme_bw() +
+    transition_time(time = dt) +
+    labs(title = 'Time: {frame_time}', color = "ID")
+
+  #Return
+  return(ani)
+}
 
 
 
