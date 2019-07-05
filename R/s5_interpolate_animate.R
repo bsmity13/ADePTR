@@ -155,6 +155,8 @@ lc_paths <- function(det_locs, conductance){
   #Apply geoCorrection
   tl <- gdistance::geoCorrection(tl, type = "c", multpl = FALSE)
 
+  #Notify user
+  cat("Calculating least cost paths (this may take a while)... ")
   paths <- det_locs %>%
     arrange(id, dt) %>%
     group_by(id) %>%
@@ -171,6 +173,7 @@ lc_paths <- function(det_locs, conductance){
                               output = "SpatialLines"))) %>%
     ungroup() %>%
     mutate(n_pts = sapply(geometry, length)/2)
+  cat("Done. \n")
 
   class(paths) <- c("lc_paths", class(paths))
 
