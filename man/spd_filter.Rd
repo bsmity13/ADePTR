@@ -7,6 +7,52 @@
 spd_filter(proc_det, max_speed = units::set_units(10, "m/s"),
   min_dist = units::set_units(1, "km"))
 }
+\arguments{
+\item{proc_det}{A \code{data.frame} of class \code{dets} as returned
+by the function \code{\link{proc_dets}()}.}
+
+\item{max_speed}{An object of class \code{\link[units]{units}} setting
+the maximum speed with which an animal can move between two receivers that
+are at least \code{min_dist} apart.}
+
+\item{min_dist}{An object of class \code{\link[units]{units}} setting the
+minimum distance two receivers must be apart to consider the speed filter.
+
+#' @details False-positive detections in acoustic data can occur for reasons
+related to signal collisions. Type A false detections are detections of
+IDs that are not present in the study system, and here we assume the user
+has already removed these detections prior to using this package. Type B
+false detections occur when a signal is erroneously decoded as the signal
+of a different tag that is in the study system -- these detections are
+much harder to distinguish from true detections and are the focus of this
+function.
+
+Determining the maximum speed an animal can move is not as
+straightforward as it first seems. Animals can move at very high speeds
+for very short bursts, but most often cannot sustain those high speeds
+over longer distances. Also, with the considerable position error that
+can result from assuming a detected animal is at the location of the
+acoustic station, an animal sitting in the middle of two receivers and
+being detected simultaneously by both can seem like an animal moving with
+impossible speed.}
+}
 \description{
 DOCUMENT ME, PLEASE
+}
+\examples{
+
+#Load the example data set
+data(acoustic)
+
+#Process detections
+proc.det <- proc_dets(det = acoustic$detections, sta = acoustic$stations)
+
+#Apply the speed filter with default max_speed and min_dist
+det.filt <- spd_filter(proc.det)
+
+}
+\seealso{
+#' See Simpfendorfer \emph{et al.}
+(\href{https://doi.org/10.1186/s40317-015-0094-z}{2015})
+for details about false detections in acoustic telemetry.
 }

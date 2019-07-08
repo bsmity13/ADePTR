@@ -149,7 +149,7 @@ proc_dets <- function(det, sta, crs = 4326){
 #'
 #' @describeIn proc_dets Checks whether an object is of class \code{dets}.
 #'
-#' @param x An object to check if it inherits class \code{dets}.
+#' @param x An object to check with \code{is.dets()}.
 #'
 #' @export
 is.dets <- function(x) {

@@ -31,9 +31,11 @@ harmonic_mean <- function(x){
 #' @usage coa_locs(proc_det, Delta_t = "1 hour", mean_type = c("arithmetic",
 #'  "harmonic"), ...)
 #'
-#' @param proc_det A \code{data.frame} of georeferenced detections as returned
+#' @param proc_det A \code{data.frame} of class \code{dets} as returned
 #' by the function \code{\link{proc_dets}()}.
 #' @param Delta_t The desired time interval for the COAs (\eqn{\Delta}t).
+#' Can be any value that can be accepted by the \code{by} argument of
+#' \code{\link{seq.POSIXt}()}.
 #' @param mean_type The type of mean used to calculate the mean positions.
 #' Should be either \code{"arithmetic"} or \code{"harmonic"}.
 #' @param ... Additional arguments (not currently implemented)

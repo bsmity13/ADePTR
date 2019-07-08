@@ -23,7 +23,7 @@ located for a period of time. Format should match the object
 to \code{\link[sf:st_crs]{sf::st_crs}()} to set CRS for sf object.
 Defaults to \code{4326}, longitude/latitude on the WGS84 spheroid.}
 
-\item{x}{An object to check if it inherits class \code{dets}.}
+\item{x}{An object to check with \code{is.dets()}.}
 }
 \value{
 Returns a \code{data.frame} of class \code{dets} of
