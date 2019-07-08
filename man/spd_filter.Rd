@@ -16,9 +16,14 @@ the maximum speed with which an animal can move between two receivers that
 are at least \code{min_dist} apart.}
 
 \item{min_dist}{An object of class \code{\link[units]{units}} setting the
-minimum distance two receivers must be apart to consider the speed filter.
-
-#' @details False-positive detections in acoustic data can occur for reasons
+minimum distance two receivers must be apart to consider the speed filter.}
+}
+\description{
+Filters detections that would imply an unreasonably high swim speed
+over a sufficiently large distance.
+}
+\details{
+False-positive detections in acoustic data can occur for reasons
 related to signal collisions. Type A false detections are detections of
 IDs that are not present in the study system, and here we assume the user
 has already removed these detections prior to using this package. Type B
@@ -34,10 +39,7 @@ over longer distances. Also, with the considerable position error that
 can result from assuming a detected animal is at the location of the
 acoustic station, an animal sitting in the middle of two receivers and
 being detected simultaneously by both can seem like an animal moving with
-impossible speed.}
-}
-\description{
-DOCUMENT ME, PLEASE
+impossible speed.
 }
 \examples{
 
@@ -52,7 +54,7 @@ det.filt <- spd_filter(proc.det)
 
 }
 \seealso{
-#' See Simpfendorfer \emph{et al.}
+See Simpfendorfer \emph{et al.}
 (\href{https://doi.org/10.1186/s40317-015-0094-z}{2015})
 for details about false detections in acoustic telemetry.
 }

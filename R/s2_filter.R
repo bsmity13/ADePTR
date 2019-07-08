@@ -5,7 +5,8 @@
 
 #' Filters out detections based on maximum speed over distance
 #'
-#' DOCUMENT ME, PLEASE
+#' Filters detections that would imply an unreasonably high swim speed
+#' over a sufficiently large distance.
 #'
 #' @param proc_det A \code{data.frame} of class \code{dets} as returned
 #' by the function \code{\link{proc_dets}()}.
@@ -15,7 +16,7 @@
 #' @param min_dist An object of class \code{\link[units]{units}} setting the
 #' minimum distance two receivers must be apart to consider the speed filter.
 #'
-#' #' @details False-positive detections in acoustic data can occur for reasons
+#' @details False-positive detections in acoustic data can occur for reasons
 #' related to signal collisions. Type A false detections are detections of
 #' IDs that are not present in the study system, and here we assume the user
 #' has already removed these detections prior to using this package. Type B
@@ -33,7 +34,7 @@
 #' being detected simultaneously by both can seem like an animal moving with
 #' impossible speed.
 #'
-#' @seealso #' See Simpfendorfer \emph{et al.}
+#' @seealso See Simpfendorfer \emph{et al.}
 #' (\href{https://doi.org/10.1186/s40317-015-0094-z}{2015})
 #' for details about false detections in acoustic telemetry.
 #'
@@ -159,7 +160,7 @@ spd_filter <- function(proc_det,
 #' probability of two false detections of the same ID becomes unacceptably
 #' high.
 #'
-#' @seealso #' See Simpfendorfer \emph{et al.}
+#' @seealso See Simpfendorfer \emph{et al.}
 #' (\href{https://doi.org/10.1186/s40317-015-0094-z}{2015})
 #' for details about false detections in acoustic telemetry.
 #'
@@ -175,8 +176,8 @@ spd_filter <- function(proc_det,
 #' det.filt <- singleton_filter(proc.det)
 #'
 #' #Apply the singleton filter with 1 month time horizon
-#' ##Note: The user should see ?lubridate::add_with_rollback to understand
-#'   #the behavior when adding months.
+#' ##Note: The user should see ?lubridate::add_with_rollback
+#'  #to understand the behavior when adding months.
 #' det.filt2 <- singleton_filter(proc.det, time_horizon = "1 month")
 #'
 #' @export

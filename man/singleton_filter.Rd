@@ -49,13 +49,13 @@ proc.det <- proc_dets(det = acoustic$detections, sta = acoustic$stations)
 det.filt <- singleton_filter(proc.det)
 
 #Apply the singleton filter with 1 month time horizon
-##Note: The user should see ?lubridate::add_with_rollback to understand
-  #the behavior when adding months.
+##Note: The user should see ?lubridate::add_with_rollback
+ #to understand the behavior when adding months.
 det.filt2 <- singleton_filter(proc.det, time_horizon = "1 month")
 
 }
 \seealso{
-#' See Simpfendorfer \emph{et al.}
+See Simpfendorfer \emph{et al.}
 (\href{https://doi.org/10.1186/s40317-015-0094-z}{2015})
 for details about false detections in acoustic telemetry.
 }
