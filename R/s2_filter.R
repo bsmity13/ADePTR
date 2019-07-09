@@ -247,7 +247,7 @@ singleton_filter <- function(proc_det, time_horizon = "1 day"){
     filter(flag)
   good <- flagged_dets %>%
     filter(!flag) %>%
-    dplyr::select(id, rec_id, sta_id, dt, x, y, geometry)
+    dplyr::select(id, rec_id, sta_id, dt, x, y)
 
   #Report to the user
   cat(paste0("  ... Done. \n", nrow(flagged), " detections were removed.\n"))
