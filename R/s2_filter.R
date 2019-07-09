@@ -217,7 +217,7 @@ singleton_filter <- function(proc_det, time_horizon = "1 day"){
              end_dt = as.POSIXct(trunc(end_dt, "hours") +
                                    lubridate::hours(1))) %>%
       #Need add_with_rollback in the case the user adds a period with months
-      mutate(end_dt = add_with_rollback(end_dt, lubridate::period(time_horizon)))
+      mutate(end_dt = lubridate::add_with_rollback(end_dt, lubridate::period(time_horizon)))
     #Create intervals
     ints <- ADePTR:::s_e_to_interval(endpoints, time_horizon = time_horizon)
     #Create interval data.frame

@@ -59,7 +59,7 @@ zone_from_ll <- function(lon, lat){
 #'
 #' @param det A \code{data.frame} of detections. Format should match the
 #' object \code{detections} from \link{acoustic} (\code{id}, \code{dt},
-#' code{rec_id}).
+#' \code{rec_id}).
 #' @param sta A \code{data.frame} of the stations where receivers were
 #' located for a period of time. Format should match the object
 #' \code{stations} from \link{acoustic} (\code{sta_id}, \code{rec_id},
@@ -213,10 +213,10 @@ plot_sta_history <- function(proc_det, set_par=TRUE, use_ggplot = FALSE, ...) {
   #Decide whether or not to use ggplot
   if (use_ggplot){
     ##ggplot Plotting
-    p <- ggplot(data = proc_det, aes(x = dt, y = sta_id)) +
-      geom_point() +
-      xlab("Date") +
-      ylab("Station")
+    p <- ggplot2::ggplot(data = proc_det, aes(x = dt, y = sta_id)) +
+      ggplot2::geom_point() +
+      ggplot2::xlab("Date") +
+      ggplot2::ylab("Station")
 
     return(p)
 
@@ -399,8 +399,8 @@ map_dets <- function(proc_det, base_layers = NULL,
     #ggplot Plotting
 
     #Start the plot with the station data
-    p <- ggplot() +
-      geom_sf(data = stas, aes(size = sz),
+    p <- ggplot2::ggplot() +
+      ggplot2::geom_sf(data = stas, aes(size = sz),
               pch = 21, color = sta_col, fill = sta_bg,
               show.legend = "point")
 
@@ -410,13 +410,13 @@ map_dets <- function(proc_det, base_layers = NULL,
         #If it's a LINESTRING
         if (any(class(base_layers[[i]])=="sfc_LINESTRING")){
           p <- p +
-            geom_sf(data = base_layers[[i]],
+            ggplot2::geom_sf(data = base_layers[[i]],
                     color = ifelse(is.na(base_cols[[i]]), 1, base_cols[[i]]))
         }
 
         #If it's a POLYGON
         if (any(class(base_layers[[i]])=="sfc_POLYGON")){
-          p <- p +
+          p <-ggplot2:: p +
             geom_sf(data = base_layers[[i]],
                     color = ifelse(is.na(base_borders[[i]]), 1, base_borders[[i]]),
                     fill = ifelse(is.na(base_cols[[i]]), 1, base_cols[[i]]))
@@ -427,16 +427,16 @@ map_dets <- function(proc_det, base_layers = NULL,
     #Now change theme, limits, etc.
     p <- p +
       ggspatial::annotation_scale(location = "bl", width_hint = 0.5) +
-      coord_sf(xlim = xlim, ylim = ylim, expand = FALSE) +
-      labs(size = "Detections") +
-      theme_bw() +
-      theme(axis.title.x = element_blank(),
+      ggplot2::coord_sf(xlim = xlim, ylim = ylim, expand = FALSE) +
+      ggplot2::labs(size = "Detections") +
+      ggplot2::theme_bw() +
+      ggplot2::theme(axis.title.x = element_blank(),
             axis.title.y = element_blank())
 
     #Decide what to return
     if(return_df){
       #Must return a list, but first print plot
-      print(p)
+      ggplot2::print.ggplot(p)
       out <- list(df = stas, ggplot = p)
       return(out)
     } else {
