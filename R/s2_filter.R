@@ -226,7 +226,7 @@ singleton_filter <- function(proc_det, time_horizon = "1 day"){
     #Assign interval id to each location
     dets_sub <- dets_sub %>%
       rowwise() %>%
-      mutate(int_id = int_df[which(dt %within% int_df$ints), "int_id"]) %>%
+      mutate(int_id = int_df[which(lubridate::`%within%`(dt, int_df$ints)), "int_id"]) %>%
       ungroup()
     #Identify those intervals which only have 1 detection at a station
     singletons <- dets_sub %>%
