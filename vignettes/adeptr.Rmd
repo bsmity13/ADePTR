@@ -11,6 +11,7 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
+  fig.width = 6.5,
   collapse = TRUE,
   comment = "#>"
 )
@@ -28,41 +29,622 @@ In this package we use the following terminology:
   - **Receiver** -- the particular piece of hardware located at a station for a given period of time
   - **Tag** -- the piece of hardware attached to the study animal which transmits acoustic signals
   - **Detection** -- a record including the tag, receiver, and a timestamp
+  - **Processed Detections** -- *detections* georeferenced to the *station* where the *receiver* was located when those detections occurred  
+  
+## Workflow
 
-## Styles
+The package was designed with the following workflow in mind:
 
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
+1. Combine input files to georeference *detections* into *processed detections*.
+2. Filter out false-positive *detections*.
+3. Calculate centers of activity (COAs) using a mean position algorithm.
+4. Summarize detections on a grid of the study area, and possibly aggregate across multiple individuals or multiple species.
+5. Interpolate between locations and animate the resulting track for visual exploratory analysis.
 
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
+For each step of the workflow, there are both possible inputs and possible outputs. The package is designed to work well with minimal user input (i.e., most arguments have defaults), but it is also designed to allow a high level of customization. Advanced users should be able to edit the outputs of any step before passsing it to the next step, or alternatively, to enter the workflow with their own data at any point.
 
-## Figures
+## Sample Data
 
-The figure sizes have been customised so that you can easily put two images side-by-side. 
+The best way to learn to use ADePTR is to try to implement the workflow using your own data; however, we have provided a small sample dataset to illustrate correct data formats and the workflow. The name of this object is `acoustic`, and it can be accessed in R after loading the package.
 
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
+``` {r load data}
+#Load the package
+library(ADePTR)
+
+#Load the data
+data(acoustic)
 ```
 
-You can enable figure captions by `fig_caption: yes` in YAML:
+All examples that follow in this vignette will make use of this dataset.
 
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
+You can view the detailed help file for this dataset by typing either `?acoustic` or `help(acoustic)`. The object `acoustic` is a list containing 4 elements (which you can access using the `$` operator):  
 
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+*  `acoustic$stations` is a `data.frame` relating the receivers to the stations where they were located.
+*  `acoustic$detections` is a `data.frame` containing the acoustic detections.
+*  `acoustic$study_area` is a polygon of class `sfc` from the package `sf` that delimits the study area (Buck Island Reef National Monument, St. Croix, USVI).
+*  `acoustic$land` is a polygon of class `sfc` from the package `sf` that designates land, a barrier to movement (Buck Island).
 
-## More Examples
+## Other packages  
 
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+ADePTR is designed to work alongside other popular R packages. We make use of the [tidyverse](https://www.tidyverse.org/) packages, especially `dplyr` and `ggplot2`. We also make extensive use of the [simple features](https://cran.r-project.org/package=sf) package for spatial data. We recommend that the user load these packages themselves so that they can take full advantage of the functionality of these packages.
 
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
+```{r load packages}
+library(dplyr)
+library(ggplot2)
+library(sf)
 ```
 
-Also a quote using `>`:
+## Step 1. Process Inputs
 
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+The first step in the workflow is to combine *detections* with the spatio-temporal information about where *receivers* were located. These two objects are stored as the first two elements of our sample data, `acoustic`.
+
+Let's take some time to look at these data.
+
+### Detections
+
+```{r show format dets, echo = FALSE}
+#Detections
+knitr::kable(head(acoustic$detections))
+```
+
+The detections are simply composed of 3 pieces of information:  
+
+*  `id` is the unique identifier of the individual tag that was detected
+*  `dt` is an object of class `POSIXct` that contains the date and time of the detection. If you are formatting your own data, you need to format this field using either base R's `strptime()` or the correct function from the package `lubridate`.
+*  `rec_id` is the unique identifier for the receiver that logged the detections.
+
+### Stations
+
+```{r show format stas, echo = FALSE}
+#Stations
+knitr::kable(head(acoustic$stations))
+```
+
+The detections are simply composed of 3 pieces of information:  
+
+*  `sta_id` is the unique identifier of the station where the receiver was physically located. 
+*  `rec_id` is the unique identifier for the receiver that was located at that station.
+*  `dt_dep` is an object of class `POSIXct` that contains the date and time the receiver was deployed at that station. If you are formatting your own data, you need to format this field using either base R's `strptime()` or the correct function from the package `lubridate`.
+*  `dt_ret` is an object of class `POSIXct` that contains the date and time the receiver was retrieved from that station. If you are formatting your own data, you need to format this field using either base R's `strptime()` or the correct function from the package `lubridate`.
+*  `x` is the x-coordinate (*e.g.*, longitude or UTM easting) of the station location.
+*  `y` is the y-coordinate (*e.g.*, latitude or UTM northing) of the station location.
+
+### Processing detections
+
+We use the function `proc_dets()` to process together the detection data and the station data. Details are available in the help file for `proc_dets()`, which you can access from R with either `?proc_dets` or `help(proc_dets)`.
+
+```{r process dets}
+#Process detections and stations
+proc.det <- proc_dets(det = acoustic$detections, sta = acoustic$stations)
+```
+
+The function joins the location information from `stations` with the detection data in `detections` whenever the `rec_id`s match and the `dt` of the detection is between the `dt_dep` and `dt_ret` of the stations.
+
+The function returns an object of class `dets`. This object is a georeferenced simple features data frame. You can learn more about the R package `sf` (simple features) by working through the vignettes for that package, which you can find [here](https://cran.r-project.org/web/packages/sf/index.html).
+
+### Plotting 
+
+Objects of class `dets` have two possible plotting methods designed to summarize the processed detections. Each one has its own dedicated function, but it can also be accessed from the generic `plot()` function. Both functions can also be set to use `ggplot2` to create the plot.
+
+#### Plot Station History
+
+The first plot of interest is a timeline of detections by station.
+
+```{r base plot_sta_history, fig.height=4, fig.width=7}
+plot_sta_history(proc_det = proc.det)
+```
+
+This generic call to plot would have produced the same figure.
+
+```{r base plot_sta_history generic, eval = FALSE}
+plot(proc_det = proc.det, which = "history")
+```
+
+If you are more comfortable with `ggplot2` for plotting, you can use the argument `use_ggplot = TRUE`. 
+
+```{r ggplot plot_sta_history, fig.width=7}
+(p <- plot_sta_history(proc_det = proc.det, use_ggplot = TRUE))
+```
+
+You can then add to your plot using `ggplot2`'s usual grammar of graphics.
+
+```{r ggplot alter plot_sta_history, fig.width=7}
+p +
+  theme_bw() +
+  xlab("Custom Date Label") +
+  ylab("Custom Station Label")
+```
+
+#### Map Detections
+
+The second plot of interest is a map of detections by station.
+
+```{r base map_dets, fig.height=4, fig.width=7}
+map_dets(proc_det = proc.det)
+```
+
+This generic call to plot would have produced the same figure.
+
+```{r base map_dets generic, eval = FALSE}
+plot(proc_det = proc.det, which = "map")
+```
+
+Note that the function `map_dets()` also returns a `data.frame` (technically a tibble) which returns the aggregated number of detections at each station. The user might want to access this information later, so they can also save the data.frame when running the function, *i.e.*:
+
+```{r map_dets save, eval = FALSE}
+agg_dets <- map_dets(proc_det = proc.det)
+```
+
+This map as it is looks pretty empty. The user might want to add various base layers to their map to give it more meaning. The function `map_dets()` has default behaviors for quick plotting, but also has many options for customizing. You can see all the options with `?map_dets` or `help(map_dets)`. Here are a few examples, making use of the `study_area` and `land` objects from our sample `acoustic` data:
+
+```{r map_dets examples, fig.height=4, fig.width=7}
+map_dets(proc_det = proc.det,
+         base_layers = list(acoustic$study_area, acoustic$land),
+         base_cols = list("gray30", "wheat"),
+         base_borders = list(NA, "seagreen"))
+
+map_dets(proc_det = proc.det,
+         base_layers = list(acoustic$study_area, acoustic$land),
+         base_cols = list("gray30", "wheat"),
+         base_borders = list(NA, "seagreen"),
+         xlim=c(-64.636, -64.604), ylim=c(17.770, 17.795),
+         leg_pos = "topleft", sta_col = "blue", sta_bg = "orange")
+
+```
+
+
+If you are more comfortable with `ggplot2` for plotting, you can use the argument `use_ggplot = TRUE`. Note that if you set `use_ggplot = TRUE` and `return_df = TRUE`, then you will get a `list` with two elements: `df` and `ggplot`.
+
+```{r ggplot fake map_dets, fig.width=7, eval = FALSE}
+(p <- map_dets(proc_det = proc.det, use_ggplot = TRUE)$ggplot)
+```
+
+```{r ggplot map_dets, echo = FALSE, fig.width=7}
+(p <- map_dets(proc_det = proc.det, return_df = FALSE, use_ggplot = TRUE))
+```
+
+You can then add to your plot using `ggplot2`'s usual grammar of graphics.
+
+```{r ggplot alter map_dets, fig.width=7}
+p +
+  geom_sf(data = acoustic$land, fill = "seagreen")
+```
+
+## Step 2. Filter
+
+Once you've processed your detections, you're ready to move on to the next step -- filtering false positive detections. False positive detections, commonly called just false detections, are typically caused by signal collisions causing a receiver to record the wrong ID. For a good resource on false detections, we recommend you read the following paper:
+
+> Simpfendorfer, CA, et al. (2015). Ghosts in the data: false detections in VEMCO pulse position modulation acoustic telemetry monitoring equipment. *Animal Biotelemetry* 3:55. doi: [10.1186/s40317-015-0094-z](https://doi.org/10.1186/s40317-015-0094-z)
+
+Simpfendorfer et al. identified two types of false detections:  
+
+*  **Type A** false detections are when a receiver decodes an ID that is not present in the study system. Since the researchers do not recognize that as the tag of one of their study animals, those detections are easily discarded. In the `ADePTR` workflow, we assume there are no Type A false detections in the data when `proc_dets()` is run.
+*  **Type B** false detections are when a receiver decodes an ID that does happen to be present in the study system. This can ofter occur because researchers order a batch of tags in a similar series, so a slight decoding error just looks like a different, yet present, individual. Type B false detections are thus much more difficult to distinguish from true detections, and they are the subject of this section.
+
+We have implemented two methods for filtering false detections. The first is a speed filter that filters out detections that would imply an unreasonably fast swim speed over a long distance, and the second is a singleton filter based on single detections of an ID on a receiver in a long time period.
+
+### Speed Filter
+
+Determining the maximum speed an animal can move is not as straightforward as it first seems. Animals can move at very high speeds for very short bursts, but most often cannot sustain those high speeds over longer distances. Also, with the considerable position error that can result from assuming a detected animal is at the location of the acoustic station, an animal sitting in the middle of two receivers and being (truly) detected simultaneously by both can seem like an animal moving with impossible speed. For this reason, we should aim to filter moderately high speeds over sufficiently large distances.
+
+The speed filter function expects an object of class `dets` returned by `proc_dets()`. It has two other arugments -- `max_speed` is an object of class `units` setting the maximum plausible speed (and the units of measure) and `min_dist` is an object of class `units` setting the minimum distance between two receivers (and the units of measure) before the filter is applied. As usual, you can see more details by checking the help file with `?spd_filter` or `help(spd_filter)`.
+
+```{r spd_filter}
+det.spd.filt <- spd_filter(proc.det)
+```
+
+The function reports how many detections it removed. Because we did not specify `max_speed` or `min_dist` in the above code, the function used the default values, 10 m/s for speed and 1 km for distance. So a detection would have to imply that our animal moved at least 10 m/s for over a kilometer for it to be filtered.
+
+We could easily change those values using any units we like, and R can still do the calculation for us. Say, *e.g.*, we want to filter any detections that imply our animal moved at least 30 miles/hr over at least 0.5 miles.
+
+```{r spd_filter2}
+library(units)
+det.spd.filt.miles <- spd_filter(proc.det,
+                           max_speed = set_units(30, "miles/h"),
+                           min_dist = set_units(0.5, "mile"))
+```
+
+#### A warning about coordinate systems
+
+Notice that the function warns you about your coordinate systems. Our input coordinates are in a geographic coordinate system that uses latitude and longitude to specify position on a spheroid (*i.e.*, the globe). It is much easier to calculate distances on a plane, so we use a projected coordinate system for that. In our case, the function converts the coordinates from lat/long to UTMs in the proper zone (see `?zone_from_ll` for the method), then calculates Euclidean distances. It does this with a warning, telling the user:
+
+> Function must convert from a geographic coordinate system to a projected coordinate system. This is safest if the original CRS was EPSG:4326, i.e., st_crs(4326).
+
+In principle, this should work for other coordinate systems using a different datum, but we have not tested this. In general, you should be safe if your CRS is either 4326 or the correct code for UTM on the WGS84 spheroid (*i.e.*, 326XX; *e.g.*, zone 17 is EPSG:32617). See `?sf::st_crs` for more details, but in general, you should familiarize yourself with coordinate systems if this doesn't make sense to you.
+
+### Singleton Filter
+
+This function is based on the assumption that it is possible for signal collisions to result in a single false detection over a sufficiently long time horizon, but that the probability of two false detections of the same ID over that same time horizon is very low. Thus, two detections are more likely to be true detections than a singleton is. 
+
+The choice of time horizon is very critical here. The period of time should be long enough that your animal would plausibly use a receiver many times, but not so long that the probability of two false detections of the same ID becomes unacceptably high.
+
+```{r singleton_filter}
+det.singl.filt <- singleton_filter(proc.det)
+```
+
+As with the other functions in `ADePTR`, most of the arguments have defaults. Here we used the default `time_horizon` of 1 day. The time horizon can be any text string that can be interpreted by `seq.POSIXt()`. See the help file for that function for details (`?seq.POSIXt`). For example, we could use a time horizon of 1 week:
+
+```{r singleton_filter week}
+det.singl.filt.week <- singleton_filter(proc.det, time_horizon = "1 week")
+```
+
+## Step 3. Centers of Activity (COAs)
+
+So far we've processed our detections, and we've filtered false detections. No we're ready to calculate centers of activity (COAs). COAs are the average position over a given time period based on detections at multiple stations. These are not precise estimates of the animal's location, but rather centroids of that short-term activity space, assuming the acoustic array coverage is sufficient. They are useful for studying long-term patterns of space use. They also help to regularize the positions in time since they are calculated over a fixed time window, and they simplify the interpretation of varying numbers of detections in those time windows. Simpfendorfer et al. (2002) is a good reference for using COAs to study animal movement:
+
+> Simpfendorfer, C.A., M.R. Heupel, and R.E. Hueter. (2002). Estimation of short-term centers of activity from an array of omnidirectional hydrophones and its use in studying animal movements. *Canadian Journal of Fisheries and Aquatic Sciences* 59(1): 23-32. doi: [10.1139/f01-191](https://doi.org/10.1139/f01-191)
+
+Here, we have implemented the two mean position algorithms suggested by Simpfendorfer et al. (2002) -- the arithmetic mean and the harmonic mean. The function `coa_locs()` takes an object of class `dets` returned from the function `proc_dets()` or one of the filtering functions (`spd_filter()` or `singleton_filter()`). As noted above, you should have performed any filtering *before* calculating COAs. The function `coa_locs()` also takes two more arguments: `Delta_t` is the desired time interval over which to calculate the COAs, and `mean_type` is a character string specifying whether the function should use the arithmetic or harmonic mean position algorithm. As usual, these functions have defaults to get your started. `Delta_t` defaults to `"1 hour"` and `mean_type` defaults to `"arithmetic"`.
+
+```{r coa default}
+#Default COAs (60 minutes, arithmetic mean)
+coas.60 <- coa_locs(proc.det)
+```
+
+`ADePTR` is designed to work in a tidy workflow, so its functions are compatible with pipes (`%>%`). Here is an example of processing detections, filtering, and then calculating COAs all in one piped command:
+
+```{r coa pipes}
+coas.daily <- proc_dets(det = acoustic$detections, 
+                        sta = acoustic$stations) %>% 
+  spd_filter() %>% 
+  singleton_filter() %>% 
+  coa_locs(Delta_t = "1 day")
+```
+
+The function `coa_locs()` returns an object of class `coa`, which, like an object of class `dets`, is a georeferenced (*i.e.*, class `sf`) `data.frame` which has some default plotting methods available to you.
+
+The plotting function `map_coas()` builds off of the `map_dets()` functionality for adding base layers and customizing your plot, then draws the COAs on top for each individual. It comes with all options set to defaults, then allows a high level of customization.
+
+```{r map_coas defaults, fig.width=7}
+#Default plot
+map_coas(coas = coas.daily, proc_det = proc.det)
+```
+
+We could also have accessed this through R's generic `plot()`.
+
+```{r map_coas generic, eval=FALSE}
+#Default plot
+plot(coas.daily, proc_det = proc.det)
+```
+
+And we can add base layers as with `map_dets()`.
+
+```{r map_coas layers, fig.width=7}
+#Customized plot
+map_coas(coas = coas.daily, proc_det = proc.det, 
+         base_layers = list(acoustic$land),
+         base_cols = list("wheat"), base_borders = list("seagreen"),
+         det_leg_pos = "topright", coa_leg_pos = "topleft")
+```
+
+As with previous plotting functions, this function also has support for `ggplot2` plotting via the argument `use_ggplot`.
+
+```{r map_coas ggplot, fig.width=7}
+#Default plot
+map_coas(coas = coas.daily, proc_det = proc.det, use_ggplot = TRUE)
+```
+
+## Step 4. Summarize on Grid
+
+Now that we have calculated COAs at regular time intervals, we can start aggregating our data over space to create visual summaries. We'll convert our geometries from a vector format to a raster format, leveraging the functions from the R package `raster`.
+
+```{r load raster}
+library(raster)
+```
+
+Be aware that when you load the `raster` package, it masks the function `select()` which is an important part of the `dplyr` workflow. So if you need to subset columns using `dplyr`, you should explicitly specify the namespace, *i.e.*, instead of `select()`, use `dplyr::select()`.
+
+### Template Rasters
+
+The first thing we need to rasterize our data is a template raster that defines the extent and cell size of the rasters we'll create to summarize our data. Users can load any raster they wish using the `raster` package to use as a template, but we have a function in `ADePTR` that will initialize a blank raster for you.
+
+The function `init_raster` can potentially take several types of inputs to define the extent of the raster:  
+
+1. `xlim` and `ylim` as numeric values (technically vectors of length 2) giving the x-limits and y-limits of the study area in any coordinate reference system (defaults to lat/long on the WGS84 spheroid).
+2. `sta` as a `data.frame` giving the location of all stations in the study with the x-coordinates in the column `sta$x` and they y-coordinates in the column `sta$y`, *e.g.*, `acoustic$stations`.
+3. `study_area` as a polygon of class `sfc` from the package `sf` delimiting the study area, *e.g.*, `acoustic$study_area`.
+
+The function checks for them in that order, so if `xlim` and `ylim` are provided, it will ignore both `sta` and `study_area`.
+
+The function also takes two additional arguments, `res` and `crs`.  
+
+*  `res` specifies the resolution of the raster as the size of each cell in the raster in the units of the coordinate reference system (*e.g.*, degrees for a geographic CRS and meters for most projected CRSs).  
+*  `crs` takes an object of class `CRS` from the package `sp` to define the coordinate reference system of the raster. Note that this is different from the other functions in `ADePTR` that use `sf::st_crs()` for this purpose. This is because the `raster` package still relies on the older `sp` package to define the CRS.
+
+``` {r raster init}
+#Coarse scale raster
+r.coarse <- init_raster(study_area = acoustic$study_area, 
+                        res = 0.01)
+
+#Medium scale raster
+r.medium <- init_raster(study_area = acoustic$study_area, 
+                        res = 0.005)
+
+#Fine scale raster
+r.fine <- init_raster(study_area = acoustic$study_area,
+                     res = 0.001)
+```
+
+Note that a raster with a finer scale will result in many more cells across the study area, and thus computation time for the following functions will increase. This is the number of cells in the rasters we just created:
+
+```{r raster table, echo = FALSE}
+knitr::kable(data.frame(Coarse = c("0.01", ncell(r.coarse)), 
+                        Medium = c("0.005", ncell(r.medium)), 
+                        Fine = c("0.001", ncell(r.fine)),
+                        row.names = c("res", "N Cells")))
+
+```
+
+### Rasterizing Detections
+
+Now that we have some template rasters to work with, we can start summarizing our data. The primary function to do that is `rasterize_dets()`, which can take either a `dets` object or a `coas` object. If you do not specify the template raster (argument `r`), then it will default to a call to `init_raster()` using the input locations as the `sta` argument to that function.
+
+```{r rasterize dets}
+##Rasterize our daily COAs
+#Coarse scale
+daily.coarse <- rasterize_dets(det_locs = coas.daily, r = r.coarse)
+#Medium scale
+daily.med <- rasterize_dets(det_locs = coas.daily, r = r.medium)
+#Fine scale
+daily.fine <- rasterize_dets(det_locs = coas.daily, r = r.fine)
+```
+
+`ADePTR` does not have custom functions for plotting these rasters because the `raster` package already provides us with that functionality.
+
+```{r plot coarse raster}
+par(mar = c(0, 0, 2, 1))
+plot(daily.coarse, main = "Coarse Resolution")
+plot(acoustic$land, add = TRUE, col = "wheat")
+plot(acoustic$study_area, add = TRUE, col = "blue")
+```
+
+```{r plot medium raster}
+par(mar = c(0, 0, 2, 1))
+plot(daily.med, main = "Medium Resolution")
+plot(acoustic$land, add = TRUE, col = "wheat")
+plot(acoustic$study_area, add = TRUE, col = "blue")
+```
+
+```{r plot fine raster}
+par(mar = c(0, 0, 2, 1))
+plot(daily.fine, main = "Fine Resolution")
+plot(acoustic$land, add = TRUE, col = "wheat")
+plot(acoustic$study_area, add = TRUE, col = "blue")
+```
+
+We advise you to keep in mind the importance of scale in spatial ecology when deciding on what resolution to use for your plots, but as you can see above, the package provides you with as much flexibility as you need.
+
+### Summarizing Use by Individual or Species
+
+Above, we created a raster map of total detections. We could have first subset our data to a single individual, or if we have multiple species in our study, we could have made one for each species. A logical next step might be to count not how many total detections we have, but how many unique individuals (or species) used each cell.
+
+To do that, we need to start by simplifying our detections to a presence/abscence or, more likely, a presence-only layer (assuming we are unsure of absences for reasons of imperfect detection). The function `raster_pres()` will do that for you, taking any values in your raster >= 1 and setting them to 1.
+
+```{r pres only}
+#Convert our medium raster to presence-only
+coa.pres <- raster_pres(daily.fine)
+#Plot
+par(mar = rep(0, 4))
+plot(acoustic$study_area)
+plot(coa.pres, legend = FALSE, add = TRUE, col = "navyblue")
+plot(acoustic$land, col = "seagreen2", add = TRUE)
+```
+
+This would be much more interesting if we now combined multiple individuals. Let's try an example with the 4 individuals we have in our sample dataset. We'll use a tidy workflow to subset an individual's COAs, rasterize the detections, and convert to presence-only. Then we'll combine them using the function `raster_overlap()`, and the result will be a raster showing how many individuals used each cell.
+
+```{r raster overlap}
+#Animal 1
+ani1 <- coas.daily %>%
+  filter(id == unique(id)[1]) %>%
+  rasterize_dets(r.fine) %>%
+  raster_pres()
+
+#Animal 2
+ani2 <- coas.daily %>%
+  filter(id == unique(id)[2]) %>%
+  rasterize_dets(r.fine) %>%
+  raster_pres()
+
+#Animal 3
+ani3 <- coas.daily %>%
+  filter(id==unique(id)[3]) %>%
+  rasterize_dets(r.fine) %>%
+  raster_pres()
+
+#Animal 4
+ani4 <- coas.daily %>%
+  filter(id==unique(id)[4]) %>%
+  rasterize_dets(r.fine) %>%
+  raster_pres()
+
+#Calculate overlap
+#Presence-only
+ani_over <- raster_overlap(ani1, ani2, ani3, ani4)
+par(mar = c(0, 0, 2, 1))
+plot(ani_over, col = viridis::viridis(n = 4), main = "Presence-only")
+plot(acoustic$study_area, add=TRUE)
+plot(acoustic$land, add=TRUE, col="wheat")
+
+#Presence-abscence
+ani_over0 <- raster_overlap(ani1, ani2, ani3, ani4, background = 0)
+par(mar = c(0, 0, 2, 1))
+plot(ani_over0, col = viridis::magma(n = 4), main = "Presence-absence")
+plot(acoustic$study_area, add=TRUE, col = "gray80", lwd = 2)
+plot(acoustic$land, add=TRUE, col="seagreen2")
+```
+
+Notice that we change our implied interpretation from presence-only to presence-absence by changing the background value to be either `NA` (presence-only) or `0` (presence-absence). While it's very easy to change these values, we urge you to carefully consider your study design before declaring these resulting rasters presence-absence.
+
+As a final note, it is possible to use `ggplot2` to plot these raster maps. It requires just a little bit of data wrangling to convert the raster with the function `as.data.frame()` before we can plot using `ggplot2`.
+
+```{r raster ggplot}
+#Convert to data.frame
+ani_over_df <- as.data.frame(ani_over, xy = TRUE)
+
+#Plot
+ggplot() +
+  geom_raster(data = ani_over_df,
+       aes(x = x, y = y, fill = layer)) +
+  geom_sf(data = acoustic$land, fill = "wheat") +
+  geom_sf(data = acoustic$study_area, color = "firebrick") +
+  scale_fill_viridis_c(na.value = NA) +
+  coord_sf() +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  labs(fill = "Individuals") +
+  theme_bw()
+```
+
+These raster maps are meant to help you aggregate and visualize your data in **space**. In the last section, we'll try to aggregate and visualize your data through **time**.
+
+## Step 5. Interpolate and Animate
+
+If we are interested in understanding how are animals use space over time, we can of course subset our data to different time periods and visualize it as either point or raster data. If you were to do that at a fine temporal scale, you would wind up with easily hundreds or thousands of maps. The natural solution is to create an animation showing each of those frames for a short period of time.
+
+Luckily, we now have the R package `gganimate` to help us extend `ggplot2`'s grammar of graphics to animations. For more information, check the website for gganimate [here](https://gganimate.com/).
+
+We could jump right into animation from our daily COAs, but the results would be a bit choppy, since most animals can move around quite a bit in a day. So we can increase the temporal resolution and interpolate between observed locations. In other words, first we interpolate, then we animate.
+
+#### Interpolate Locations
+
+We'll start with a finer temporal scale for our COAs.
+
+```{r six hour coas}
+#Use coarser time-scale for COAs
+coas.6h <- proc_dets(det = acoustic$detections,
+                     sta = acoustic$stations) %>% 
+  spd_filter() %>% 
+  singleton_filter() %>% 
+  coa_locs(Delta_t = "6 hours")
+```
+
+##### Straight Paths
+
+If our study area had no barriers to movement (*e.g.*, land), then we could simply interpolate along straight lines. `ADePTR` has a function for creating straight paths called `str_paths()`.
+
+```{r straight paths}
+##Straight Paths
+stps <- str_paths(det_locs = coas.6h)
+```
+
+The resulting object is of class `str_paths`, and we again have a plotting method available to visualize. We can map these paths using base R or `ggplot2`.
+
+```{r plot straight paths}
+#Default plot
+plot_paths(stps)
+
+#Generic method with land added
+plot(stps, set_par = FALSE)
+plot(acoustic$land, add = TRUE, col = "#BBBBBB")
+
+#Plot with ggplot2
+plot_paths(stps, use_ggplot = TRUE) +
+  theme_bw() +
+  geom_sf(data = acoustic$land, fill = "#30303010")
+```
+
+##### Least Cost Paths
+
+Many coastal study systems have barriers such as land, as does our sample dataset. We can see in the plot above that at least one of our animals crosses the island. That visualization doesn't necessarily help us understand what is going on in our study system.
+
+In this case, we can specify impassable polygons within our study system and interpolate between locations using least cost paths. `ADePTR` has a function for creating least cost paths called `lc_paths()`. This function makes use of functions from the package `gdistance` to calculate the least cost paths based on a conductance raster layer, which you pass as an argument to `lc_paths()`. For the conductance layer, you can create a custom layer yourself that specifies conductance in any way that makes sense in your study system, but for simplicity, `ADePTR` has a function called `raster_conduct` that will make one for you from a polygon of land or other impassable terrain. Thus, the process is:  
+
+1.  Create a conductance raster either
+    +  using function `raster_conduct()`
+    +  your own custom raster
+2.  Create least cost paths
+3.  Interpolate along the paths
+
+```{r conductance raster}
+#Create a conductance raster
+conduct <- raster_conduct(sa_rast = r.fine, impassable = acoustic$land)
+#Plot
+plot(conduct)
+```
+
+See that conductances range from 0 to 1, with 1 being perfectly conductive and 0 being completely impassable.
+
+```{r lcp}
+#Create least-cost paths
+lcps <- lc_paths(det_locs = coas.6h, conductance = conduct)
+```
+
+Function `lc_paths()` returns an object of class `lc_paths`. Like with the straight paths, we have plotting methods available. In fact, we use the same function regardless of whether our path is straight or least cost.
+
+```{r plot lcps}
+#Default plot
+plot_paths(lcps)
+
+#Plot on top of detections
+par(mar = rep(0, 4))
+map_dets(proc_det = proc.det,
+         base_layers = list(acoustic$study_area, acoustic$land),
+         base_cols = list("gray30", "wheat"), 
+         base_borders = list(NA, "seagreen"),
+         xlim=c(-64.636, -64.604), ylim=c(17.770, 17.795),
+         leg_pos = "topleft", sta_col = "blue", sta_bg = "orange",
+         set_par = FALSE)
+plot_paths(lcps, set_par = FALSE, add = TRUE)
+
+#Plot using ggplot2
+#Plot with ggplot2
+plot_paths(lcps, use_ggplot = TRUE) +
+  theme_bw() +
+  geom_sf(data = acoustic$land)
+```
+
+##### Interpolate along Paths
+
+Now, using either straight paths, or least cost paths, we can interpolate locations. We will use the function `regular_points()` to create regularly spaced points. This function returns points that are regularly placed in *space*, even though the user provides a *time* argument (Delta_t). When the input locations are regularly spaced in time, the output locations will be regularly spaced in **both** space and time. This will already be the case if the user has decided to use COAs to represent the locations.
+
+```{r interp}
+lcp.interp <- regular_points(lcps, Delta_t = "1 hour")
+```
+
+Here, we've interpolated along the least cost paths, since they are more interesting, but we could've easily used the straight paths. The function `regular_points()` returns an object of class `reg_points`.
+
+#### Animate Movements
+
+Now that we've interpolated along the paths between all locations, we are ready to animate. You can proceed on your own using `gganimate` with the `reg_points` object, or to get yourself started, you can use the `ADePTR` function `animate_points()`.
+
+```{r animate}
+#Load the package
+library(gganimate)
+
+#Create animation
+ani <- animate_points(lcp.interp) +
+  geom_sf(data = acoustic$land) #add the island
+
+```
+
+This vignette cannot display the GIF that gganimate would create if we typed `print(ani)`. However, you can view it in your web browser on our GitHub site by clicking [here](). Alternatively, you can run the command in your own R session.
+
+You can save your animation to file using the function `gganimate::anim_save()`.
+
+```{r save animation, eval = FALSE}
+anim_save("my_animation.gif", animation = ani)
+```
+
+## Tidy Workflow
+
+As you've seen throughout this vignette, you can use a tidy workflow to combine several steps of this process. Here's an example going from raw detections to the animation all in one code chunk:
+
+``` {r tidy flow}
+tidy.ani <- proc_dets(det = acoustic$detections, 
+                      sta = acoustic$stations) %>% 
+  spd_filter() %>% 
+  singleton_filter() %>% 
+  coa_locs(Delta_t = "1 day") %>% 
+  lc_paths(conductance = conduct) %>% 
+  regular_points(Delta_t = "1 hour") %>% 
+  animate_points() +
+    geom_sf(data = acoustic$land)
+```
+
+## Contact Information
+
+This package was developed by Brian J. Smith and Thomas H. Selby while they were working for CNT as contractors to the U.S. Geological Survey. You can contact them with questions, bug reports, or feature requests via the GitHub page for this package, <https://github.com/bjsmith-usgs/ADePTR>.
+
+## Acknowledgements
+
+Any use of trade, product, or firm names is for descriptive purposes only and does not imply endorsement by the U.S. Government.
