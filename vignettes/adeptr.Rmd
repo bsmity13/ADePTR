@@ -559,6 +559,7 @@ In this case, we can specify impassable polygons within our study system and int
 #Create a conductance raster
 conduct <- raster_conduct(sa_rast = r.fine, impassable = acoustic$land)
 #Plot
+par(mar = rep(0, 4))
 plot(conduct)
 ```
 
@@ -595,7 +596,7 @@ plot_paths(lcps, use_ggplot = TRUE) +
 
 ##### Interpolate along Paths
 
-Now, using either straight paths, or least cost paths, we can interpolate locations. We will use the function `regular_points()` to create regularly spaced points. This function returns points that are regularly placed in *space*, even though the user provides a *time* argument (Delta_t). When the input locations are regularly spaced in time, the output locations will be regularly spaced in **both** space and time. This will already be the case if the user has decided to use COAs to represent the locations.
+Now, using either straight paths, or least cost paths, we can interpolate locations. We will use the function `regular_points()` to create regularly spaced points. This function returns points that are regularly placed in *space*, even though the user provides a *time* argument (`Delta_t`). When the input locations are regularly spaced in time, the output locations will be regularly spaced in **both** space and time. This will already be the case if the user has decided to use COAs to represent the locations.
 
 ```{r interp}
 lcp.interp <- regular_points(lcps, Delta_t = "1 hour")
