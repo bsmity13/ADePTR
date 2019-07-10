@@ -12,7 +12,7 @@ is.dets(x)
 \arguments{
 \item{det}{A \code{data.frame} of detections. Format should match the
 object \code{detections} from \link{acoustic} (\code{id}, \code{dt},
-code{rec_id}).}
+\code{rec_id}).}
 
 \item{sta}{A \code{data.frame} of the stations where receivers were
 located for a period of time. Format should match the object
