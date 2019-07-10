@@ -179,6 +179,9 @@ is.coa <- function(x) {
 #' the graphical parameters or not? This should be \code{FALSE} if the
 #' user wishes to manually set the graphical parameters, \emph{e.g.}, so
 #' that they can still add to the plot manually after it is generated.
+#' @param use_ggplot \code{TRUE} or \code{FALSE}. Should the plot be
+#' made using \code{ggplot2}? Defaults to \code{FALSE} and uses base R
+#' plotting.
 #' @param ... Additional arguments to be passed to \code{\link{map_dets}},
 #' \emph{e.g.}, \code{base.layers}, \code{xlim}, \code{ylim}, \emph{etc}.
 #'
@@ -190,7 +193,7 @@ is.coa <- function(x) {
 #' @export
 map_coas <- function(coas, proc_det, coa_palette = viridis::viridis,
                      coa_leg_pos = "bottomleft", det_leg_pos = NA,
-                     set_par = TRUE, ...){
+                     set_par = TRUE, use_ggplot = FALSE, ...){
 
   #Check class of coas
   if(!is.coa(coas)){
@@ -200,61 +203,70 @@ map_coas <- function(coas, proc_det, coa_palette = viridis::viridis,
   #Store coa_crs
   coa_crs <- sf::st_crs(coas)
 
-  #Store original parameters
-  orig.par <- par(no.readonly = TRUE)
-  #Change parameters
-  if(set_par){
-    par(mar = c(0.1, 0.1, 0.1, 0.1),
-        cex = 0.8)
+  #Decide whether to use ggplot2 or base R plotting
+  if(use_ggplot){
+    #ggplot2 plotting
+
+    cat("FUNCTIONALITY NOT CURRENTLY IMPLEMENTED.\n  Set use_ggplot = FALSE")
+
+  } else {
+    #Base R plotting
+
+    #Store original parameters
+    orig.par <- par(no.readonly = TRUE)
+    #Change parameters
+    if(set_par){
+      par(mar = c(0.1, 0.1, 0.1, 0.1),
+          cex = 0.8)
+    }
+
+    #Factor id
+    coas$id <- factor(coas$id)
+
+    #Create an sfc_POINT object
+    coas.sp <- sf::st_as_sf(coas, coords = c("x", "y"),
+                            dim = "XY", crs = coa_crs) %>%
+      sf::st_geometry()
+
+    #Create an sfc_MULTILINESTRING object
+    coas.lines <- coas %>%
+      sf::st_as_sf(coords = c("x", "y"), dim = "XY", crs = coa_crs) %>%
+      group_by(id) %>%
+      summarize() %>%
+      sf::st_cast("MULTILINESTRING") %>%
+      sf::st_geometry()
+
+    #Pass proc_det and ... to map_dets
+    map_dets(proc_det = proc_det, leg_pos = det_leg_pos, set_par = FALSE, ...)
+
+    #Setup palette for individuals
+    orig.pal <- palette() #Get previous palette
+    n.ind <- length(unique(coas$id))
+    palette(do.call(coa_palette, args = list(n = n.ind))) #Change palette
+
+    #Add lines to map
+    plot(coas.lines, col = 1:length(levels(coas$id)), add=TRUE)
+
+    #Add COAs to map
+    plot(coas.sp, pch = 22, cex = 0.8,
+         col = "black", bg = as.numeric(coas$id),
+         add = TRUE)
+
+    #Plot legend
+    legend(x = coa_leg_pos, legend = levels(coas$id),
+           pch = 22, pt.cex = 0.8, col = "black",
+           pt.bg = 1:length(levels(coas$id)),
+           title = expression(bold("Individuals")))
+
+    #Reset palette
+    palette(orig.pal)
+
+
+    #Revert to original parameters
+    if(set_par){
+      on.exit(par(orig.par), add = TRUE)
+    }
   }
-
-  #Factor id
-  coas$id <- factor(coas$id)
-
-  #Create an sfc_POINT object
-  coas.sp <- sf::st_as_sf(coas, coords = c("x", "y"),
-                          dim = "XY", crs = coa_crs) %>%
-    sf::st_geometry()
-
-  #Create an sfc_MULTILINESTRING object
-  coas.lines <- coas %>%
-    sf::st_as_sf(coords = c("x", "y"), dim = "XY", crs = coa_crs) %>%
-    group_by(id) %>%
-    summarize() %>%
-    sf::st_cast("MULTILINESTRING") %>%
-    sf::st_geometry()
-
-  #Pass proc_det and ... to map_dets
-  map_dets(proc_det = proc_det, leg_pos = det_leg_pos, set_par = FALSE, ...)
-
-  #Setup palette for individuals
-  orig.pal <- palette() #Get previous palette
-  n.ind <- length(unique(coas$id))
-  palette(do.call(coa_palette, args = list(n = n.ind))) #Change palette
-
-  #Add lines to map
-  plot(coas.lines, col = 1:length(levels(coas$id)), add=TRUE)
-
-  #Add COAs to map
-  plot(coas.sp, pch = 22, cex = 0.8,
-       col = "black", bg = as.numeric(coas$id),
-       add = TRUE)
-
-  #Plot legend
-  legend(x = coa_leg_pos, legend = levels(coas$id),
-         pch = 22, pt.cex = 0.8, col = "black",
-         pt.bg = 1:length(levels(coas$id)),
-         title = expression(bold("Individuals")))
-
-  #Reset palette
-  palette(orig.pal)
-
-
-  #Revert to original parameters
-  if(set_par){
-    on.exit(par(orig.par), add = TRUE)
-  }
-
 }
 
 

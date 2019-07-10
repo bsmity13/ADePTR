@@ -36,6 +36,10 @@ the graphical parameters or not? This should be \code{FALSE} if the
 user wishes to manually set the graphical parameters, \emph{e.g.}, so
 that they can still add to the plot manually after it is generated.}
 
+\item{use_ggplot}{\code{TRUE} or \code{FALSE}. Should the plot be
+made using \code{ggplot2}? Defaults to \code{FALSE} and uses base R
+plotting.}
+
 \item{...}{Additional arguments to be passed to \code{\link{map_dets}},
 \emph{e.g.}, \code{base.layers}, \code{xlim}, \code{ylim}, \emph{etc}.}
 }
