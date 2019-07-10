@@ -4,18 +4,15 @@
 \alias{map_coas}
 \title{Map Centers of Activity}
 \usage{
-map_coas(proc_det, coas, coa_crs = 4326, coa_palette = viridis::viridis,
+map_coas(proc_det, coas, coa_palette = viridis::viridis,
 coa_leg_pos = "bottomleft", det_leg_pos = NA, set_par = TRUE, ...)
 }
 \arguments{
-\item{proc_det}{The \code{data.frame} of processed detections used by
-\code{\link{coa_locs}()} to create the COAs.}
-
 \item{coas}{The \code{data.frame} of centers of activiy (COAs) created
 by \code{\link{coa_locs}()}.}
 
-\item{coa_crs}{A coordinate reference system to use for the COA
-locations. Used by \code{\link[sf]{st_sf}} as the \code{crs} argument.
+\item{proc_det}{The \code{data.frame} of processed detections used by
+\code{\link{coa_locs}()} to create the COAs.
 Defaults to integer 4326, indicating EPSG code 4326 for WGS 84 lat/long.}
 
 \item{coa_palette}{A function name that will generate a palette for each

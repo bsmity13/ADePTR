@@ -29,7 +29,7 @@ harmonic_mean <- function(x){
 #' the locations of detections in a user-defined time period.
 #'
 #' @usage coa_locs(proc_det, Delta_t = "1 hour", mean_type = c("arithmetic",
-#'  "harmonic"), ...)
+#'  "harmonic"))
 #'
 #' @param proc_det A \code{data.frame} of class \code{dets} as returned
 #' by the function \code{\link{proc_dets}()}.
@@ -38,14 +38,13 @@ harmonic_mean <- function(x){
 #' \code{\link{seq.POSIXt}()}.
 #' @param mean_type The type of mean used to calculate the mean positions.
 #' Should be either \code{"arithmetic"} or \code{"harmonic"}.
-#' @param ... Additional arguments (not currently implemented)
 #'
 #' @details This function implements the two mean position algorithms
 #' suggested by Simpfendorfer et al. (2002) for calculating centers of
 #' activity (COAs).
 #'
-#' @return Returns an object of class \code{coa} (also a \code{data.frame})
-#'  with georeferenced centers of activity.
+#' @return Returns an object of class \code{coa} (also class \code{sf}
+#' and class \code{data.frame}) with georeferenced centers of activity.
 #'
 #' @seealso \code{\link{proc_dets}} for details on the formatting of the
 #' \code{data.frame} \code{proc_det}
@@ -61,13 +60,17 @@ harmonic_mean <- function(x){
 #' Fisheries and Aquatic Sciences} 59(1): 23-32.
 #'
 #' @export
-coa_locs <- function(proc_det, Delta_t = "1 hour", mean_type = c("arithmetic", "harmonic"), ...){
+coa_locs <- function(proc_det, Delta_t = "1 hour",
+                     mean_type = c("arithmetic", "harmonic")){
 
   #Check class
   if(!is.dets(proc_det)){
     stop("\n  Object proc_det must be of class 'dets'.
   See ?proc_dets for conversion.")
   }
+
+  #Store crs
+  crs <- sf::st_crs(proc_det)
 
   #Drop spatial information
   proc_det <- sf::st_drop_geometry(proc_det)
@@ -126,6 +129,12 @@ coa_locs <- function(proc_det, Delta_t = "1 hour", mean_type = c("arithmetic", "
       arrange(id, dt) %>%
       as.data.frame
   }
+
+  #Make this a spatial object again
+  coas <- coas %>%
+    sf::st_as_sf(agr = "identity", coords = c("x", "y"),
+                 crs = crs, remove = FALSE)
+
   #Set S3 class to "coa"
   class(coas) <- c("coa", class(coas))
   return(coas)
@@ -145,15 +154,13 @@ is.coa <- function(x) {
 #' COAs returned by \code{\link{coa_locs}()} to the map.
 #'
 #' @usage
-#' map_coas(proc_det, coas, coa_crs = 4326, coa_palette = viridis::viridis,
+#' map_coas(proc_det, coas, coa_palette = viridis::viridis,
 #' coa_leg_pos = "bottomleft", det_leg_pos = NA, set_par = TRUE, ...)
 #'
-#' @param proc_det The \code{data.frame} of processed detections used by
-#' \code{\link{coa_locs}()} to create the COAs.
 #' @param coas The \code{data.frame} of centers of activiy (COAs) created
 #' by \code{\link{coa_locs}()}.
-#' @param coa_crs A coordinate reference system to use for the COA
-#' locations. Used by \code{\link[sf]{st_sf}} as the \code{crs} argument.
+#' @param proc_det The \code{data.frame} of processed detections used by
+#' \code{\link{coa_locs}()} to create the COAs.
 #' Defaults to integer 4326, indicating EPSG code 4326 for WGS 84 lat/long.
 #' @param coa_palette A function name that will generate a palette for each
 #' of the individuals tracked. Can be any function that will accept \code{n}
@@ -181,7 +188,7 @@ is.coa <- function(x) {
 #' @seealso \code{\link{map_dets}}
 #'
 #' @export
-map_coas <- function(proc_det, coas, coa_crs = 4326, coa_palette = viridis::viridis,
+map_coas <- function(coas, proc_det, coa_palette = viridis::viridis,
                      coa_leg_pos = "bottomleft", det_leg_pos = NA,
                      set_par = TRUE, ...){
 
@@ -189,6 +196,9 @@ map_coas <- function(proc_det, coas, coa_crs = 4326, coa_palette = viridis::viri
   if(!is.coa(coas)){
     stop("Object 'coas' must be of class 'coa'. See ?coa_locs.")
   }
+
+  #Store coa_crs
+  coa_crs <- sf::st_crs(coas)
 
   #Store original parameters
   orig.par <- par(no.readonly = TRUE)

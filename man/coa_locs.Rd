@@ -5,7 +5,7 @@
 \title{Calculate Centers of Activity}
 \usage{
 coa_locs(proc_det, Delta_t = "1 hour", mean_type = c("arithmetic",
- "harmonic"), ...)
+ "harmonic"))
 }
 \arguments{
 \item{proc_det}{A \code{data.frame} of class \code{dets} as returned
@@ -17,12 +17,10 @@ Can be any value that can be accepted by the \code{by} argument of
 
 \item{mean_type}{The type of mean used to calculate the mean positions.
 Should be either \code{"arithmetic"} or \code{"harmonic"}.}
-
-\item{...}{Additional arguments (not currently implemented)}
 }
 \value{
-Returns an object of class \code{coa} (also a \code{data.frame})
- with georeferenced centers of activity.
+Returns an object of class \code{coa} (also class \code{sf}
+and class \code{data.frame}) with georeferenced centers of activity.
 }
 \description{
 This function calculates Centers of Activity (COAs) by averaging
