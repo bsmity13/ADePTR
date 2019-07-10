@@ -186,6 +186,9 @@ rasterize_dets <- function(det_locs, r = init_raster(sta = det_locs)){
   #Internal note: this function needs to be updated so that it checks
     #any 'r' provided by the user
 
+  #Drop geometry
+  det_locs <- sf::st_drop_geometry(det_locs)
+
   #Grab x and y coords of locations and coerce to matrix
   locs <- as.matrix(det_locs[,c("x", "y")])
 
