@@ -284,7 +284,8 @@ plot_paths <- function(paths, path_palette = viridis::viridis, add = FALSE, set_
     #ggplot Plotting
     ggp <- ggplot2::ggplot(data = paths) +
       ggplot2::geom_sf(aes(geometry = geometry, color = id), show.legend = "point") +
-      scale_color_manual(values = path_cols)
+      scale_color_manual(values = path_cols) +
+      labs(color = "ID")
     return(ggp)
   } else {
     #Base R plotting
