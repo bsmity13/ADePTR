@@ -59,6 +59,26 @@ harmonic_mean <- function(x){
 #' and its use in studying animal movements. \emph{Canadian Journal of
 #' Fisheries and Aquatic Sciences} 59(1): 23-32.
 #'
+#' @examples
+#'
+#' #Load data
+#' data(acoustic)
+#'
+#' ##Conventional workflow
+#' #Process detections
+#' proc.det <- proc_dets(det = acoustic$detections,
+#'                       sta = acoustic$stations)
+#'
+#' #Default COAs (60 minutes, arithmetic mean)
+#' coas.60 <- coa_locs(proc.det)
+#'
+#' ##Tidy workflow
+#' coas.6h <- proc_dets(det = acoustic$detections,
+#'                      sta = acoustic$stations) %>%
+#'            spd_filter() %>%
+#'            singleton_filter() %>%
+#'            coa_locs(Delta_t = "6 hours")
+#'
 #' @export
 coa_locs <- function(proc_det, Delta_t = "1 hour",
                      mean_type = c("arithmetic", "harmonic")){

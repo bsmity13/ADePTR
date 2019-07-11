@@ -31,6 +31,27 @@ This function implements the two mean position algorithms
 suggested by Simpfendorfer et al. (2002) for calculating centers of
 activity (COAs).
 }
+\examples{
+
+#Load data
+data(acoustic)
+
+##Conventional workflow
+#Process detections
+proc.det <- proc_dets(det = acoustic$detections,
+                      sta = acoustic$stations)
+
+#Default COAs (60 minutes, arithmetic mean)
+coas.60 <- coa_locs(proc.det)
+
+##Tidy workflow
+coas.6h <- proc_dets(det = acoustic$detections,
+                     sta = acoustic$stations) \%>\%
+           spd_filter() \%>\%
+           singleton_filter() \%>\%
+           coa_locs(Delta_t = "6 hours")
+
+}
 \references{
 Simpfendorfer, C.A., M.R. Heupel, and R.E. Hueter. (2002). Estimation of
 short-term centers of activity from an array of omnidirectional hydrophones
