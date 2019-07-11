@@ -54,7 +54,7 @@ harmonic_mean <- function(x){
 #'
 #' @references
 #'
-#' Simpfendorfer, C.A., M.R. Heupel, and R.E. Hueter. 2002. Estimation of
+#' Simpfendorfer, C.A., M.R. Heupel, and R.E. Hueter. (2002). Estimation of
 #' short-term centers of activity from an array of omnidirectional hydrophones
 #' and its use in studying animal movements. \emph{Canadian Journal of
 #' Fisheries and Aquatic Sciences} 59(1): 23-32.

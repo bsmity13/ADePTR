@@ -15,6 +15,7 @@
 #'   \item Filter erroneous detections
 #'   \item Calculate centers of activity
 #'   \item Summarize detections on a grid of the study area
+#'   \item Interpolate locations and animate
 #' }
 #'
 #' For each step of the workflow, there are both possible inputs and
@@ -27,35 +28,69 @@
 #'
 #' @section Step 1. Process Inputs:
 #'
-#' The functions available for this step are:
+#' The primary functions available for this step are:
 #' \itemize{
 #'   \item \code{\link{proc_dets}()} -- uses station/receiver information to
 #'   georeference the detections
 #'   \item \code{\link{plot_sta_history}()} -- makes a summary plot of
 #'   detections over time by station
+#'   \item \code{\link{map_dets}()} -- makes a map showing the number of
+#'   detections by station
 #' }
 #'
 #' @section Step 2. Filter:
 #'
-#' The functions available for this step are:
+#' The primary functions available for this step are:
 #' \itemize{
-#'   \item \code{\link{NOT_YET}()} -- DOES SOMETHING
+#'   \item \code{\link{spd_filter}()} -- filters detections that would imply
+#'   an unrealistic swim speed
+#'   \item \code{\link{singleton_filter}()} -- filters single detections of
+#'   an individual ID at an individual station over a given time period
 #' }
 #'
-#'  @section Step 3. COAs:
+#' @section Step 3. COAs:
 #'
-#' The functions available for this step are:
+#' The primary functions available for this step are:
 #' \itemize{
 #'   \item \code{\link{coa_locs}()} -- calculates centers of activity (COAs)
 #'   using either arithmetic or harmonic means
+#'   \item \code{\link{map_coas}()} -- makes a map showing the COAs on top of
+#'   detections by station
 #' }
 #'
 #' @section Step 4. Summarize on Grid:
 #'
-#' The functions available for this step are:
+#' The primary functions available for this step are:
 #' \itemize{
-#'   \item \code{\link{NOT_YET}()} -- DOES SOMETHING
+#'   \item \code{\link{init_raster}()} -- initializes a template raster for
+#'   future functions
+#'   \item \code{\link{rasterize_dets}()} -- converts detection data to counts
+#'   of detections by raster cells
+#'   \item \code{\link{raster_pres}()} -- converts a detections raster to a
+#'   presence-only raster
+#'   \item \code{\link{raster_overlap}()} -- sums the input presence-only or
+#'   presence-absence layers to show overlapping individuals or species
 #' }
+#'
+#' @section Step 5. Interpolate and Animate:
+#'
+#' The primary functions available for this step are:
+#' \itemize{
+#'   \item \code{\link{str_paths}()} -- connects locations with straight paths
+#'   \item \code{\link{lc_paths}()} -- connects locations with least
+#'   cost paths
+#'   \item \code{\link{regular_points}()} -- interpolates regular points along
+#'   a straight path or least cost path
+#'   \item \code{\link{animate_points}()} -- creates an animation from regular
+#'   points
+#' }
+#'
+#' @section More details:
+#'
+#' For more details on the usage of this package, see the package vignette.
+#'
+#' The package has a GitHub repository at
+#' \url{https://github.com/bjsmith-usgs/ADePTR}.
 #'
 #'
 #' @encoding UTF-8

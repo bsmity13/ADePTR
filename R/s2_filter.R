@@ -38,6 +38,13 @@
 #' (\href{https://doi.org/10.1186/s40317-015-0094-z}{2015})
 #' for details about false detections in acoustic telemetry.
 #'
+#' @references
+#'
+#' Simpfendorfer, C. A., C. Huveneers, A. Steckenreuter, K. Tattersall,
+#' X. Hoenner, R. Harcourt, and M.R. Heupel. (2015). Ghosts in the data:
+#' false detections in VEMCO pulse position modulation acoustic telemetry
+#' monitoring equipment. \emph{Animal Biotelemetry} 3:55.
+#'
 #' @examples
 #'
 #' #Load the example data set
@@ -163,6 +170,13 @@ spd_filter <- function(proc_det,
 #' @seealso See Simpfendorfer \emph{et al.}
 #' (\href{https://doi.org/10.1186/s40317-015-0094-z}{2015})
 #' for details about false detections in acoustic telemetry.
+#'
+#' @references
+#'
+#' Simpfendorfer, C. A., C. Huveneers, A. Steckenreuter, K. Tattersall,
+#' X. Hoenner, R. Harcourt, and M.R. Heupel. (2015). Ghosts in the data:
+#' false detections in VEMCO pulse position modulation acoustic telemetry
+#' monitoring equipment. \emph{Animal Biotelemetry} 3:55.
 #'
 #' @examples
 #'

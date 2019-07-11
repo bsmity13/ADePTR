@@ -54,6 +54,12 @@ det.filt <- singleton_filter(proc.det)
 det.filt2 <- singleton_filter(proc.det, time_horizon = "1 month")
 
 }
+\references{
+Simpfendorfer, C. A., C. Huveneers, A. Steckenreuter, K. Tattersall,
+X. Hoenner, R. Harcourt, and M.R. Heupel. (2015). Ghosts in the data:
+false detections in VEMCO pulse position modulation acoustic telemetry
+monitoring equipment. \emph{Animal Biotelemetry} 3:55.
+}
 \seealso{
 See Simpfendorfer \emph{et al.}
 (\href{https://doi.org/10.1186/s40317-015-0094-z}{2015})
