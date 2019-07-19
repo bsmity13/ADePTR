@@ -64,6 +64,20 @@ You can view the detailed help file for this dataset by typing either `?acoustic
 *  `acoustic$study_area` is a polygon of class `sfc` from the package `sf` that delimits the study area (Buck Island Reef National Monument, St. Croix, USVI).
 *  `acoustic$land` is a polygon of class `sfc` from the package `sf` that designates land, a barrier to movement (Buck Island).
 
+Additionally, we provided a CSV file that has already processed detections. This is to show a user that already has georeferenced detections how to enter the workflow with their dataset. This CSV file is installed in the package's folder in the library.
+
+You can find the sample CSV path by typing this:
+
+```{r csv path, eval=FALSE}
+sample.csv.path <- system.file("extdata", "processed_detections.csv", package = "ADePTR")
+```
+
+You can load the CSV by then typing this:
+
+```{r csv load, eval=FALSE}
+sample.csv <- read.csv(sample.csv.path)
+```
+
 ## Other packages  
 
 ADePTR is designed to work alongside other popular R packages. We make use of the [tidyverse](https://www.tidyverse.org/) packages, especially `dplyr` and `ggplot2`. We also make extensive use of the [simple features](https://cran.r-project.org/package=sf) package for spatial data. We recommend that the user load these packages themselves so that they can take full advantage of the functionality of these packages.
@@ -121,6 +135,21 @@ proc.det <- proc_dets(det = acoustic$detections, sta = acoustic$stations)
 The function joins the location information from `stations` with the detection data in `detections` whenever the `rec_id`s match and the `dt` of the detection is between the `dt_dep` and `dt_ret` of the stations.
 
 The function returns an object of class `dets`. This object is a georeferenced simple features data frame. You can learn more about the R package `sf` (simple features) by working through the vignettes for that package, which you can find [here](https://cran.r-project.org/web/packages/sf/index.html).
+
+### Already Processed Detections
+
+Some users might have their detection data already georeferenced. In this case, the user can coerce their raw data to a `dets` object and then continue with the rest of the workflow.
+
+Here, we'll load the sample CSV, then use the function `as.dets()` to coerce it to a `dets` object so that we can proceed.
+
+```{r coerce dets}
+#Load a CSV of already processed detections
+proc.det.csv <- read.csv(system.file("extdata", "processed_detections.csv", package = "ADePTR"))
+
+#Coerce to dets
+proc.det2 <- as.dets(proc.det.csv)
+
+```
 
 ### Plotting 
 
@@ -618,7 +647,7 @@ ani <- animate_points(lcp.interp) +
 
 ```
 
-This vignette cannot display the GIF that gganimate would create if we typed `print(ani)`. However, you can view it in your web browser on our GitHub site by clicking [here](). Alternatively, you can run the command in your own R session.
+This vignette cannot display the GIF that gganimate would create if we typed `print(ani)`. However, you can view it in your web browser on our GitHub site by clicking [here](https://github.com/bjsmith-usgs/ADePTR/blob/master/my_animation.gif). Alternatively, you can run the command in your own R session.
 
 You can save your animation to file using the function `gganimate::anim_save()`.
 

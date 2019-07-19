@@ -43,3 +43,15 @@ acoustic <- list(stations=stations,
 
 #Save to package----
 usethis::use_data(acoustic, overwrite = TRUE)
+
+#Example CSV for "as.dets()"----
+processed <- ADePTR::proc_dets(det = acoustic$detections,
+                               sta = acoustic$stations)
+#Drop geometry
+processed <- st_drop_geometry(processed)
+
+#Set class to only data.frame
+class(processed) <- "data.frame"
+
+#Save
+write.csv(processed,"inst/extdata/processed_detections.csv", row.names = FALSE)

@@ -156,6 +156,101 @@ is.dets <- function(x) {
   inherits(x, "dets")
 }
 
+#' Coerce a \code{data.frame} to class \code{dets}
+#'
+#' Coerces a \code{data.frame} to a \code{dets} object
+#'
+#' @param x A \code{data.frame} to coerce to a \code{dets} object.
+#' @param crs Coordinate Reference System to use for the detections. Passed
+#' to \code{\link[sf:st_crs]{sf::st_crs}()} to set CRS for sf object.
+#' Defaults to \code{4326}, longitude/latitude on the WGS84 spheroid.
+#'
+#' @examples
+#'
+#' #Load a CSV of already processed detections
+#' proc.det.csv <- read.csv(
+#'                  system.file("extdata", "processed_detections.csv",
+#'                               package = "ADePTR"))
+#'
+#' #Coerce to dets
+#' proc.det2 <- as.dets(proc.det.csv)
+#'
+#' @export
+as.dets <- function(x, crs = 4326){
+  #Check for all columns -- rec_id is optional
+  if(is.null(x$id)){
+    stop("The individual tag ID must be supplied in a column named 'id'.
+         See ?proc_det for more details.")
+  }
+  if(is.null(x$sta_id)){
+    stop("The station ID must be supplied in a column named 'sta_id'.
+           See ?proc_det for more details.")
+  }
+  if(is.null(x$dt)){
+    stop("The timestamp must be supplied in a column named 'dt'.
+           See ?proc_det for more details.")
+  }
+  if(is.null(x$x)){
+    stop("The x-coordinate must be supplied in a column named 'x'.
+           See ?proc_det for more details.")
+  }
+  if(is.null(x$y)){
+    stop("The y-coordinate must be supplied in a column named 'y'.
+           See ?proc_det for more details.")
+  }
+
+  #Check data types
+  if(!is.numeric(x$x)){
+    stop("The x-coordinate supplied is not a numeric vector.")
+  }
+  if(!is.numeric(x$y)){
+    stop("The y-coordinate supplied is not a numeric vector.")
+  }
+  if(!lubridate::is.POSIXt(x$dt)){
+    #Check if it's a Date
+    if(lubridate::is.Date(x$dt)){
+      stop("A date was supplied in column 'dt' instead of a timestamp.")
+    }
+    #Check it it's a factor
+    if(is.factor(x$dt)){
+      x$dt <- as.character(x$dt)
+    }
+    #Check if it's a character
+    if(is.character(x$dt)){
+      #Note -- this assumes the format
+      x$dt <- lubridate::ymd_hms(x$dt)
+    }
+    #Check again if it is POSIXt
+    if(!lubridate::is.POSIXt(x$dt)){
+      stop("as.dets() could not understand the column 'dt'. Please reformat
+           as a POSIXt object or a character string in the format
+           '%Y-%m-%d %H:%M:%S'. See ?proc_det for details.")
+    }
+  }
+
+  #Remove any detections that were not assigned to a location
+  rem <- which(is.na(x$x) | is.na(x$y))
+  if (length(rem) > 0) {
+    #Report to the user.
+    warning(paste0("\n", length(rem), " out of ", nrow(x),
+                   " rows of data did not have coordinates.",
+                   "\n\nThese rows have been removed."))
+    #Drop those rows
+    x <- x[-rem,]
+  }
+
+  #Create spatial object
+  cat("\nCreating spatial geometry... ")
+  x <- x %>%
+    sf::st_as_sf(agr = "identity", coords = c("x", "y"), crs = crs, remove = FALSE)
+  cat("Done.\n")
+
+  #Set the S3 class
+  class(x) <- c("dets", class(x))
+
+  return(x)
+}
+
 #' Plots processed station history
 #'
 #' This function takes a processed detection history returned by
