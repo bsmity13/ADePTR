@@ -7,4 +7,4 @@ Acoustic Detection Processing and Visualization Tool in R
 ## To get started:  
 *  Load the package with `library(ADePTR)`
 *  See the help file with `?ADePTR`
-*  Work through the vignette with `vignette("ADePTR")`
+*  Work through the vignette with `vignette("adeptr")`
