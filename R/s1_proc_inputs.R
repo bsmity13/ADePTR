@@ -531,7 +531,7 @@ map_dets <- function(proc_det, base_layers = NULL,
     #Decide what to return
     if(return_df){
       #Must return a list, but first print plot
-      ggplot2::print.ggplot(p)
+      print(p)
       out <- list(df = stas, ggplot = p)
       return(out)
     } else {
