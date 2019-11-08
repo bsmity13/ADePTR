@@ -4,7 +4,7 @@ Title: Acoustic Detection Processing and Visualization Tool in R
 Version: 0.0.0.9000
 Date/Publication: 2018-11-19
 Authors@R: c(
-    person("Brian J.", "Smith", email="bjsmith@usgs.gov", role=c("aut", "cre")),
+    person("Brian J.", "Smith", email="bjsmith@aggiemail.usu.edu", role=c("aut", "cre")),
     person("Thomas H.", "Selby", email="thomas.h.selby@gmail.com", role="aut"))
 Description: A package developed to streamline processing and visualization
     of animal movement data from a passive acoustic array.
