@@ -7,7 +7,7 @@
 as.dets(x, crs = 4326)
 }
 \arguments{
-\item{x}{A \code{data.frame} to coerce}
+\item{x}{A \code{data.frame} to coerce to a \code{dets} object.}
 
 \item{crs}{Coordinate Reference System to use for the detections. Passed
 to \code{\link[sf:st_crs]{sf::st_crs}()} to set CRS for sf object.
@@ -15,4 +15,15 @@ Defaults to \code{4326}, longitude/latitude on the WGS84 spheroid.}
 }
 \description{
 Coerces a \code{data.frame} to a \code{dets} object
+}
+\examples{
+
+#Load a CSV of already processed detections
+proc.det.csv <- read.csv(
+                 system.file("extdata", "processed_detections.csv",
+                              package = "ADePTR"))
+
+#Coerce to dets
+proc.det2 <- as.dets(proc.det.csv)
+
 }

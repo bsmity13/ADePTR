@@ -9,9 +9,9 @@
 plot_paths(paths, path_palette = viridis::viridis, add = FALSE,
 set_par = !add, use_ggplot = FALSE)
 
-\method{plot}{str_paths}(stps, ...)
+plot.str_paths(stps, ...)
 
-\method{plot}{lc_paths}(lcps, ...)
+plot.lc_paths(lcps, ...)
 }
 \arguments{
 \item{paths}{An object of class \code{*_paths}: either \code{str_paths}
@@ -49,11 +49,11 @@ in an \code{str_paths} or an \code{lc_paths} object.
 \details{
 Blah blah
 }
-\section{Methods (by generic)}{
+\section{Functions}{
 \itemize{
-\item \code{plot}: Plot \code{str_paths} objects
+\item \code{plot.str_paths}: Plot \code{str_paths} objects
 
-\item \code{plot}: Plot \code{lc_paths} objects
+\item \code{plot.lc_paths}: Plot \code{lc_paths} objects
 }}
 
 \examples{

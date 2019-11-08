@@ -4,7 +4,7 @@
 \alias{plot.dets}
 \title{Plot a \code{dets} object}
 \usage{
-\method{plot}{dets}(proc_det, which = "history", ...)
+plot.dets(proc_det, which = "history", ...)
 }
 \arguments{
 \item{proc_det}{A \code{data.frame} of class \code{dets} as returned

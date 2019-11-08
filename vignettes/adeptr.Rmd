@@ -673,8 +673,8 @@ tidy.ani <- proc_dets(det = acoustic$detections,
 
 ## Contact Information
 
-This package was developed by Brian J. Smith and Thomas H. Selby while they were working for CNT as contractors to the U.S. Geological Survey. You can contact them with questions, bug reports, or feature requests via the GitHub page for this package, <https://github.com/bjsmith-usgs/ADePTR>.
+This package was initially developed by Brian J. Smith and Thomas H. Selby while they were working for CNT as contractors to the U.S. Geological Survey. Development has since been taken over by Brian personally. You can contact them with questions, bug reports, or feature requests via the GitHub page for this package, <https://github.com/bsmity13/ADePTR>.
 
 ## Acknowledgements
 
-Any use of trade, product, or firm names is for descriptive purposes only and does not imply endorsement by the U.S. Government.
+Any use of trade, product, or firm names is for descriptive purposes only and does not imply endorsement by the U.S. Government. Kristen M. Hart (kristen_hart@usgs.gov) provided support for the initial development of this package.

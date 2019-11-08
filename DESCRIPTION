@@ -21,7 +21,8 @@ Imports:
     ggplot2(>= 3.1.0),
     ggspatial(>= 1.0.3),
     gganimate(>= 1.0.3),
-    units(>= 0.6-2)
+    units(>= 0.6-2),
+    animation(>= 2.6)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

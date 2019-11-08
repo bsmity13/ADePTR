@@ -4,7 +4,7 @@
 \alias{plot.coa}
 \title{Plot a \code{coa} object}
 \usage{
-\method{plot}{coa}(coas, proc_det, ...)
+plot.coa(coas, proc_det, ...)
 }
 \arguments{
 \item{coas}{An object of class \code{coa} to plot. Function

@@ -308,7 +308,7 @@ plot_sta_history <- function(proc_det, set_par=TRUE, use_ggplot = FALSE, ...) {
   #Decide whether or not to use ggplot
   if (use_ggplot){
     ##ggplot Plotting
-    p <- ggplot2::ggplot(data = proc_det, aes(x = dt, y = sta_id)) +
+    p <- ggplot2::ggplot(data = proc_det, ggplot2::aes(x = dt, y = sta_id)) +
       ggplot2::geom_point() +
       ggplot2::xlab("Date") +
       ggplot2::ylab("Station")
@@ -495,7 +495,7 @@ map_dets <- function(proc_det, base_layers = NULL,
 
     #Start the plot with the station data
     p <- ggplot2::ggplot() +
-      ggplot2::geom_sf(data = stas, aes(size = sz),
+      ggplot2::geom_sf(data = stas, ggplot2::aes(size = sz),
               pch = 21, color = sta_col, fill = sta_bg,
               show.legend = "point")
 
